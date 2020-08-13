@@ -1,0 +1,12 @@
+.animation-view {
+    flex-grow: 1;
+    //border: 1px solid black;
+    margin: 1px;
+    background-color: #282828;
+
+    .dom-overlay-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+}

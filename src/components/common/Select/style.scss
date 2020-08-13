@@ -1,0 +1,105 @@
+.select-container {
+  position: relative;
+  margin-bottom: 10px;
+
+  .select-box {
+    position: relative;
+
+    .icon-right {
+      position: absolute;
+      top: 0;
+      right: 0;
+      cursor: pointer;
+      height: 100%;
+      width: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .multi-select {
+      display: flex;
+      flex-wrap: wrap;
+      height: auto;
+      padding-right: 25px;
+      padding-left: 0;
+      padding-bottom: 1px;
+
+      .tag {
+        background-color: #ebf5ff;
+        border: 1px solid #b3d9ff;
+        color: #007eff;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        font-size: 75%;
+        line-height: 1;
+        text-align: center;
+        vertical-align: middle;
+        border-radius: .25em;
+        display: inline-flex;
+        min-height: 25px;
+        margin-left: 10px;
+        margin-bottom: 5px;
+
+        span {
+          padding: 5px;
+        }
+
+        .remove {
+          border-left: 1px solid #b3d9ff;
+          cursor: pointer;
+        }
+      }
+
+      input {
+        flex: 1;
+        min-width: 50px;
+        height: 25px;
+        border: 0;
+        outline: none;
+        margin-left: 10px;
+        margin-bottom: 5px;
+      }
+    }
+  }
+
+  .dropdown-list {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    background: white;
+    width: 100%;
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1), 0 1px 0 0 rgba(0, 0, 0, 0.06);
+    z-index: 1000;
+
+    .scrollable {
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      max-height: 160px;
+      padding: 5px 5px;
+    }
+    .fixed {
+      padding: 5px 5px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    span {
+      cursor: pointer;
+      padding: 5px 10px;
+      color: #444;
+
+      &:hover, &.active {
+        background: #71b6f9;
+        color: white;
+      }
+    }
+
+    .separator {
+      width: 100%;
+      height: 1px;
+      background: #eaeaea;
+    }
+  }
+}

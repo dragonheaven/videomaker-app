@@ -1,0 +1,15 @@
+.right-scene-view {
+    //margin: 1px;
+    height: 100%;
+    border-left: 1px solid #282828;
+    overflow-x: auto;
+
+    .time-ruler-container {
+        height: 30px;
+    }
+
+    .timeline-content {
+        margin-top: 1px;
+        border-top: 1px solid #2A2A2A;
+    }
+}
