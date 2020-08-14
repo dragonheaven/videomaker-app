@@ -13,9 +13,12 @@ const AnimationView = ({
   curTemplate,
   setTemplateProperty,
   setAnimationViewSize,
+  paused,
 }) => {
   const AdobeAn = {};
   const [exportRoot, setExportRoot] = useState(null);
+  const [stage, setStage] = useState();
+  // let stage;
 
   const makeResponsive = (isResp, respDim, isScale, scaleType, domContainers, stage, lib) => {
     let lastW; let lastH; let lastS = 1;
@@ -46,15 +49,16 @@ const AnimationView = ({
         style.width = `${w * sRatio}px`;
         style.height = `${h * sRatio}px`;
       });
-      const stage1 = stage;
-      stage1.scaleX = pRatio * sRatio;
-      stage1.scaleY = pRatio * sRatio;
+      const newStage = stage;
+      newStage.scaleX = pRatio * sRatio;
+      newStage.scaleY = pRatio * sRatio;
       lastW = iw;
       lastH = ih;
       lastS = sRatio;
-      stage1.tickOnUpdate = false;
-      stage.update();
-      stage1.tickOnUpdate = true;
+      newStage.tickOnUpdate = false;
+      newStage.update();
+      newStage.tickOnUpdate = true;
+      setStage(newStage);
     };
 
     window.addEventListener('resize', resizeCanvas);
@@ -67,16 +71,19 @@ const AnimationView = ({
 
     setExportRoot(newExportRoot);
 
-    const stage = new lib.Stage(canvas);
+    // const newStage = new lib.Stage(canvas);
+    const newStage = new window.createjs.Stage('canvas');
+    setStage(newStage);
 
     // Registers the "tick" event listener.
     const fnStartAnimation = () => {
-      stage.addChild(newExportRoot);
+      newStage.addChild(newExportRoot);
+      // newExportRoot.stop();
       window.createjs.Ticker.framerate = lib.properties.fps;
-      window.createjs.Ticker.addEventListener('tick', stage);
+      window.createjs.Ticker.addEventListener('tick', newStage);
     };
     // Code to support hidpi screens and responsive scaling.
-    makeResponsive(true, 'both', false, 1, [canvas, animContainer, domOverlayContainer], stage, lib);
+    makeResponsive(true, 'both', false, 1, [canvas, animContainer, domOverlayContainer], newStage, lib);
     AdobeAn.compositionLoaded(lib.properties.id);
     fnStartAnimation();
   };
@@ -154,6 +161,33 @@ const AnimationView = ({
     });
   }, [templateProperty]);
 
+  useEffect(() => {
+    if (!exportRoot || !stage) return;
+    if (paused) {
+      exportRoot.stop();
+    } else {
+      const circle = new window.createjs.Shape();
+      circle.graphics.beginFill('red').drawCircle(140, 140, 40);
+      const rect = new window.createjs.Shape();
+      rect.graphics.beginFill('blue').drawRect(440, 40, 350, 100);
+      const polygon = new window.createjs.Shape();
+      polygon.graphics.beginFill('yellow').drawEllipse(200, 500, 300, 100);
+      const path = new window.createjs.Shape();
+      path.graphics.beginFill('green')
+        .moveTo(440, 100)
+        .lineTo(560, 260)
+        .lineTo(360, 390)
+        .lineTo(200, 160)
+        .lineTo(440, 100);
+
+      exportRoot.addChild(circle);
+      exportRoot.addChild(rect);
+      exportRoot.addChild(polygon);
+      exportRoot.addChild(path);
+      exportRoot.play();
+    }
+  }, [paused]);
+
   const resizeCanvasView = () => {
     const canvasView = document.getElementById('canvas_view');
     setAnimationViewSize({
@@ -182,11 +216,13 @@ AnimationView.propTypes = {
   curTemplate: PropTypes.object.isRequired,
   setTemplateProperty: PropTypes.func.isRequired,
   setAnimationViewSize: PropTypes.func.isRequired,
+  paused: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = ({ template }) => ({
   templateProperty: template.property,
   curTemplate: template.curTemplate,
+  paused: template.paused,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(

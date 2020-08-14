@@ -40,12 +40,25 @@ const TextControlView = ({ curProperty, curTemplate, setTemplateProperty }) => {
     });
   };
 
+  const splitFont = (fontString) => {
+    const fontElements = fontString.split(' ');
+    let fontSize;
+    do {
+      fontSize = fontElements.shift();
+    } while (fontSize.indexOf('px') === -1);
+    const fontFamily = fontElements.join(' ');
+    return { fontSize, fontFamily };
+  };
+
+  const mergeFont = (fontString, fontSize, fontFamily) => {
+    const fontWeight = fontString.split(' ').shift();
+    if (fontWeight.indexOf('px') !== -1) return `${fontSize} ${fontFamily}`;
+    return `${fontWeight} ${fontSize} ${fontFamily}`;
+  };
+
   const onFontChange = (name, value) => {
     if (!curTextElementKey || !curTextElement) return;
-    const fontElements = curTextElement.font.split(' ');
-    let fontWeight = fontElements.shift();
-    let fontSize = fontElements.shift();
-    let fontFamily = fontElements.join(' ');
+    let { fontSize, fontFamily } = splitFont(curTextElement.font);
 
     switch (name) {
       case 'font-family':
@@ -54,19 +67,13 @@ const TextControlView = ({ curProperty, curTemplate, setTemplateProperty }) => {
       case 'font-size':
         fontSize = `${value}px`;
         break;
-      case 'font-weight':
-        fontWeight = value;
-        break;
       default:
         return;
     }
-    mutateCurTextElement({ font: `${fontWeight} ${fontSize} ${fontFamily}` });
+    mutateCurTextElement({ font: mergeFont(curTextElement.font, fontSize, fontFamily) });
   };
 
-  const fontElements = curTextElement ? curTextElement.font.split(' ') : [];
-  fontElements.shift();
-  const fontSize = fontElements.shift();
-  const fontFamily = fontElements.join(' ');
+  const { fontSize, fontFamily } = curTextElement ? splitFont(curTextElement.font) : { };
 
   return (
     <>

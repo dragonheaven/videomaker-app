@@ -20,7 +20,7 @@ const LeftSceneView = ({ paused, setPaused }) => {
           <span>Timeline</span>
         </div>
         <div onClick={onPlayButtonClick}>
-          { !paused ? <Icon.Play size={16} /> : <Icon.Pause size={16} /> }
+          { paused ? <Icon.Play size={16} /> : <Icon.Pause size={16} /> }
         </div>
       </div>
       <div className="sub-content flex-grow-1" />
