@@ -1,0 +1,21 @@
+.timeline-container {
+    min-height: 200px;
+    max-height: 200px;
+    display: flex;
+
+    .outline {
+        min-width: 200px;
+        max-width: 200px;
+        .outline-node {
+            color: white;
+            min-width: 200px;
+        }
+    }
+
+    .timeline {
+        position: relative;
+        flex-grow: 1;
+        width: 100%;
+        height: 100%;
+    }
+}
