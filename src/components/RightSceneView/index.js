@@ -1,31 +1,46 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import './style.scss';
-import HorizontalRuler from '../HorizontalRuler';
-import TimeLineView from '../TimelineView';
+import * as Icon from 'react-feather';
+import PropTypes from 'prop-types';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import * as TemplateAction from '../../store/actions/template.action';
 
-const RightSceneView = () => {
-  const [width, setWidth] = useState(0);
-
-  const resizeRightSceneSize = () => {
-    const rightbar = document.getElementById('right_sidebar');
-    const w = window.innerWidth - rightbar.clientWidth - 280;
-    setWidth(w);
+const RightSceneView = ({ paused, setPaused }) => {
+  const onPlayButtonClick = () => {
+    setPaused(!paused);
   };
 
-  useEffect(() => {
-    window.addEventListener('resize', resizeRightSceneSize);
-  }, []);
-
   return (
-    <div className="right-scene-view d-flex flex-column flex-grow-1" style={{ width }}>
-      <div className="time-ruler-container d-flex flex-column justify-content-end">
-        <HorizontalRuler count={1000} interval={10} />
+    <div className="right-scene-view d-flex flex-grow-1 justify-content-center align-items-center">
+      <div className="action-button">
+        <Icon.SkipBack size={20} />
       </div>
-      <div className="flex-grow-1 timeline-content" style={{ width: 10000 }}>
+      <div className="action-button" onClick={onPlayButtonClick}>
+        { paused ? <Icon.Play size={20} /> : <Icon.Pause size={20} /> }
+      </div>
+      <div className="action-button">
+        <Icon.SkipForward size={20} />
       </div>
     </div>
   );
 };
 
-export default RightSceneView;
+RightSceneView.propTypes = {
+  paused: PropTypes.bool.isRequired,
+  setPaused: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = ({ template }) => ({
+  paused: template.paused,
+});
+
+const mapDispatchToProps = (dispatch) => bindActionCreators(
+  {
+    setPaused: TemplateAction.setPaused,
+  },
+  dispatch,
+);
+
+export default connect(mapStateToProps, mapDispatchToProps)(RightSceneView);

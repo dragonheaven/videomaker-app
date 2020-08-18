@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
@@ -18,14 +18,13 @@ const AnimationView = ({
   const AdobeAn = {};
   const [exportRoot, setExportRoot] = useState(null);
   const [stage, setStage] = useState();
-  // let stage;
 
-  const makeResponsive = (isResp, respDim, isScale, scaleType, domContainers, stage, lib) => {
+  const makeResponsive = (isResp, respDim, isScale, scaleType, domContainers, stage, canvasSize) => {
     let lastW; let lastH; let lastS = 1;
     const resizeCanvas = () => {
       const canvasView = document.getElementById('canvas_view');
 
-      const w = lib.properties.width; const h = lib.properties.height;
+      const w = canvasSize.width; const h = canvasSize.height;
       const iw = canvasView.clientWidth - 50;
       const ih = canvasView.clientHeight - 50;
       const pRatio = window.devicePixelRatio || 1; const xRatio = iw / w; const yRatio = ih / h; let sRatio = 1;
@@ -65,30 +64,19 @@ const AnimationView = ({
     resizeCanvas();
   };
 
-  const handleComplete = (canvas, animContainer, domOverlayContainer, evt, comp) => {
-    const lib = comp.getLibrary();
-    const newExportRoot = new lib[curTemplate.entryPoint]();
+  const handleTick = (event) => {
+    if (event.paused) return;
 
-    setExportRoot(newExportRoot);
+    const circle = stage.getChildByName('circle');
+    const industry1 = stage.getChildByName('IndustryCompany1');
 
-    // const newStage = new lib.Stage(canvas);
-    const newStage = new window.createjs.Stage('canvas');
-    setStage(newStage);
-
-    // Registers the "tick" event listener.
-    const fnStartAnimation = () => {
-      newStage.addChild(newExportRoot);
-      // newExportRoot.stop();
-      window.createjs.Ticker.framerate = lib.properties.fps;
-      window.createjs.Ticker.addEventListener('tick', newStage);
-    };
-    // Code to support hidpi screens and responsive scaling.
-    makeResponsive(true, 'both', false, 1, [canvas, animContainer, domOverlayContainer], newStage, lib);
-    AdobeAn.compositionLoaded(lib.properties.id);
-    fnStartAnimation();
+    if (circle.x > 800) circle.x = 0;
+    else circle.x += 10;
+    if (industry1) {
+      if (industry1.x < 800) industry1.x += 15;
+    }
+    stage.update();
   };
-
-  useCallback(handleComplete, [curTemplate]);
 
   useEffect(() => {
     const canvas = document.getElementById('canvas');
@@ -138,9 +126,12 @@ const AnimationView = ({
       texts,
       shapes,
     });
+    newExportRoot.name = curTemplate.id;
+    newExportRoot.autoReset = false;
+    setExportRoot(newExportRoot);
 
-    handleComplete(canvas, animContainer, domOverlayContainer, {}, comp);
-  }, [curTemplate]);
+    stage.addChildAt(newExportRoot, 0);
+  }, [AdobeAn, curTemplate, setTemplateProperty, stage]);
 
   useEffect(() => {
     if (!exportRoot) return;
@@ -159,37 +150,17 @@ const AnimationView = ({
     Object.entries(shapes).forEach(([key, shape]) => {
       newExportRoot[key]._shape.visible = shape.visible;
     });
-  }, [templateProperty]);
+  }, [exportRoot, templateProperty]);
 
   useEffect(() => {
-    if (!exportRoot || !stage) return;
-    if (paused) {
-      exportRoot.stop();
-    } else {
-      const circle = new window.createjs.Shape();
-      circle.graphics.beginFill('red').drawCircle(140, 140, 40);
-      const rect = new window.createjs.Shape();
-      rect.graphics.beginFill('blue').drawRect(440, 40, 350, 100);
-      const polygon = new window.createjs.Shape();
-      polygon.graphics.beginFill('yellow').drawEllipse(200, 500, 300, 100);
-      const path = new window.createjs.Shape();
-      path.graphics.beginFill('green')
-        .moveTo(440, 100)
-        .lineTo(560, 260)
-        .lineTo(360, 390)
-        .lineTo(200, 160)
-        .lineTo(440, 100);
-
-      exportRoot.addChild(circle);
-      exportRoot.addChild(rect);
-      exportRoot.addChild(polygon);
-      exportRoot.addChild(path);
-      exportRoot.play();
-    }
-  }, [paused]);
+    if (!stage) return;
+    window.createjs.Ticker.paused = !!paused;
+    stage.update();
+  }, [paused, stage]);
 
   const resizeCanvasView = () => {
     const canvasView = document.getElementById('canvas_view');
+    if (!canvasView) return;
     setAnimationViewSize({
       width: canvasView.clientWidth,
       height: canvasView.clientHeight,
@@ -197,9 +168,28 @@ const AnimationView = ({
   };
 
   useEffect(() => {
+    const newStage = new window.createjs.Stage('canvas');
+    setStage(newStage);
+    const circle = new window.createjs.Shape();
+    circle.name = 'circle';
+    circle.graphics.beginFill('red').drawCircle(140, 140, 40);
+    console.log(circle);
+    newStage.addChild(circle);
+
     window.addEventListener('resize', resizeCanvasView);
+    const canvas = document.getElementById('canvas');
+    const animContainer = document.getElementById('animation_container');
+    const domOverlayContainer = document.getElementById('dom_overlay_container');
+    // eslint-disable-next-line max-len
+    makeResponsive(true, 'both', false, 1, [canvas, animContainer, domOverlayContainer], newStage, { width: 1280, height: 720 });
     resizeCanvasView();
-  }, []);
+  }, [resizeCanvasView]);
+
+  useEffect(() => {
+    if (!stage) return;
+    window.createjs.Ticker.framerate = 24;
+    window.createjs.Ticker.addEventListener('tick', handleTick);
+  }, [handleTick, stage]);
 
   return (
     <div id="canvas_view" className="animation-view d-flex justify-content-center align-items-center">

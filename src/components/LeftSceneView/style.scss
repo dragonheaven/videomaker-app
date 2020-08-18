@@ -2,22 +2,16 @@
     min-width: 200px;
     max-width: 200px;
     border-right: 1px solid #282828;
-    //margin: 1px;
-    height: 100%;
+    border-bottom: 1px solid #282828;
+    height: 30px;
+    color: white;
+    padding: 0 10px;
+    font-size: 1rem;
 
-    .sub-header {
-        height: 30px;
-        color: white;
-        padding: 0 10px;
-        .title {
-            span {
-                font-size: 1rem;
-                margin-left: 10px;
-            }
+    .title {
+        span {
+            font-size: 1rem;
+            margin-left: 10px;
         }
-    }
-    .sub-content {
-        margin-top: 1px;
-        border-top: 1px solid #2A2A2A;
     }
 }

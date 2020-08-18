@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import * as Icon from 'react-feather';
+
 import { Timeline } from '../../lib/animation-timeline';
 
 import './style.scss';
 
 const TimeLineView = () => {
   const [timeline, setTimeline] = useState();
+  const [layers, setLayers] = useState([]);
 
   const onScrollChange = (obj) => {
     if (!timeline) return;
@@ -14,7 +17,10 @@ const TimeLineView = () => {
     if (options) {
       if (outlineContainer) {
         outlineContainer.style.minHeight = `${obj.scrollHeight}px`;
-        document.getElementById('outline-scroll-container').scrollTop = obj.scrollTop;
+        const scrollContainer = document.getElementById('outline-scroll-container');
+        scrollContainer.style.overflow = 'hidden';
+        scrollContainer.scrollTop = obj.scrollTop;
+        console.log(scrollContainer.style, obj.scrollTop, scrollContainer.scrollTop);
       }
     }
   };
@@ -22,19 +28,22 @@ const TimeLineView = () => {
   useEffect(() => {
     const newTimeline = new Timeline();
     setTimeline(newTimeline);
+  }, []);
 
+  useEffect(() => {
+    if (!timeline) return;
     const rows = [
       {
         selected: false,
         draggable: false,
+        locked: true,
+        hidden: true,
 
         keyframes: [
           {
             val: 40,
-            shape: 'rhomb',
           },
           {
-            shape: 'rhomb',
             val: 3000,
             selected: false,
           },
@@ -57,7 +66,8 @@ const TimeLineView = () => {
         ],
       },
       {
-        hidden: false,
+        hidden: true,
+        locked: true,
         keyframes: [
           {
             val: 1000,
@@ -72,6 +82,7 @@ const TimeLineView = () => {
       },
       {
         title: 'Groups (Limited)',
+        locked: true,
         keyframes: [
           {
             val: 40,
@@ -115,12 +126,11 @@ const TimeLineView = () => {
         ],
       },
       {
+        locked: true,
         title: 'Style Customized',
-        groupHeight: 20,
         keyframesStyle: {
-          shape: 'rect',
           width: 5,
-          height: 20,
+          strokeColor: 'red',
         },
         keyframes: [
           {
@@ -131,7 +141,7 @@ const TimeLineView = () => {
           },
         ],
       }, {
-
+        locked: true,
       }, {
         title: 'Max Value',
         max: 4000,
@@ -142,7 +152,7 @@ const TimeLineView = () => {
             group: 'block',
             shape: 'rect',
             fillColor: 'Red',
-            strokeColor: 'Black',
+            strokeColor: 'red',
             val: 4000,
             selectable: false,
             draggable: false,
@@ -154,42 +164,90 @@ const TimeLineView = () => {
             val: 2500,
           },
         ],
-      }, {}, {}, {}, {}, {}, {}, {},
+      }, {}, {}, {}, {}, {}, {},
     ];
-    const outlineContainer = document.getElementById('outline-container');
+    setLayers(rows);
 
-    newTimeline.initialize({ id: 'timeline', headerHeight: 45 });
-    newTimeline.setModel({ rows });
-    newTimeline.onTimeChanged((event) => {
+    timeline.initialize({
+      id: 'timeline',
+      headerHeight: 45,
+      headerFillColor: '#282828',
+      fillColor: '#2A2A2A',
+      timelineStyle: {
+        strokeColor: '#4af',
+        capWidth: 10,
+        capHeight: 10,
+        capType: 'rect',
+        fillColor: '#4af',
+      },
+      rowsStyle: {
+        height: 30,
+        color: 'red',
+        groupFillColor: '#535353',
+        selectedColor: 'red',
+        keyframesStyle: {
+          shape: 'circle',
+          fillColor: 'white',
+          strokeColor: 'red',
+          strokeThickness: 4,
+          width: 6,
+          height: 6,
+        },
+      },
+    });
+    timeline.setModel({ rows });
+    timeline.onTimeChanged((event) => {
       console.log('onTimeChanged', event);
     });
-    newTimeline.onScroll(onScrollChange);
+    timeline.onScroll(onScrollChange);
 
-    const options = newTimeline.getOptions();
+    const options = timeline.getOptions();
     const headerElement = document.getElementById('outline-header');
     headerElement.style.maxHeight = `${options.headerHeight}px`;
     headerElement.style.minHeight = `${options.headerHeight}px`;
+  }, [onScrollChange, timeline]);
 
-    rows.forEach((obj, index) => {
-      const div = document.createElement('div');
-      div.classList.add('outline-node');
-      div.style.maxHeight = `${options.rowsStyle.height}px`;
-      div.style.minHeight = `${options.rowsStyle.height}px`;
-      div.style.marginBottom = `${options.rowsStyle.marginBottom}px`;
-      div.innerText = obj.title || `Track ${index}`;
-      outlineContainer.appendChild(div);
-    });
-  }, [onScrollChange]);
+  if (!timeline) return null;
+  const options = timeline.getOptions();
 
   return (
     <div className="timeline-container flex-grow-1">
       <div className="outline">
-        <div className="outline-header" id="outline-header" />
+        <div className="outline-header" id="outline-header">
+          <div className="d-flex top-bar">
+            <Icon.FilePlus size={16} />
+            <Icon.Trash2 size={16} />
+          </div>
+          <div className="d-flex justify-content-end bottom-bar">
+            <Icon.Eye size={12} />
+            <Icon.Lock size={12} />
+          </div>
+        </div>
         <div
           className="outline-scroll-container"
           id="outline-scroll-container"
         >
-          <div className="outline-items" id="outline-container" />
+          <div className="outline-items" id="outline-container">
+            {
+              layers.map((item, index) => (
+                <div
+                  key={index}
+                  className="outline-node d-flex justify-content-between"
+                  style={{
+                    maxHeight: options.rowsStyle.height,
+                    minHeight: options.rowsStyle.height,
+                    marginBottom: options.rowsStyle.marginBottom,
+                  }}
+                >
+                  <span>{item.title || `Track ${index}`}</span>
+                  <div className="row-icons">
+                    { item.hidden ? <Icon.EyeOff size={12} /> : <Icon.Eye size={12} /> }
+                    { item.locked ? <Icon.Lock size={12} /> : <Icon.Unlock size={12} /> }
+                  </div>
+                </div>
+              ))
+            }
+          </div>
         </div>
       </div>
       <div id="timeline" className="timeline" />
