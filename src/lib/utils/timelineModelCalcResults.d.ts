@@ -1,7 +1,6 @@
 import { TimelineRow } from '../timelineRow';
 import { TimelineKeyframe } from '../timelineKeyframe';
 import { TimelineRanged } from '../timelineRanged';
-
 export interface TimelineCalculated extends TimelineRanged {
     /**
      * Screen coordinates of the element.

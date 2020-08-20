@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import * as Icon from 'react-feather';
 
-import { Timeline } from '../../lib/animation-timeline';
 
 import './style.scss';
+import PropTypes from 'prop-types';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import * as LayerAction from '../../store/actions/layer.action';
 
-const TimeLineView = () => {
+import { Timeline } from '../../lib/animation-timeline';
+import {TextField} from "@material-ui/core";
+
+const TimeLineView = (props) => {
   const [timeline, setTimeline] = useState();
-  const [layers, setLayers] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
 
   const onScrollChange = (obj) => {
     if (!timeline) return;
@@ -20,7 +27,6 @@ const TimeLineView = () => {
         const scrollContainer = document.getElementById('outline-scroll-container');
         scrollContainer.style.overflow = 'hidden';
         scrollContainer.scrollTop = obj.scrollTop;
-        console.log(scrollContainer.style, obj.scrollTop, scrollContainer.scrollTop);
       }
     }
   };
@@ -31,143 +37,10 @@ const TimeLineView = () => {
   }, []);
 
   useEffect(() => {
+    const { layers } = props;
     if (!timeline) return;
-    const rows = [
-      {
-        selected: false,
-        draggable: false,
-        locked: true,
-        hidden: true,
 
-        keyframes: [
-          {
-            val: 40,
-          },
-          {
-            val: 3000,
-            selected: false,
-          },
-        ],
-      },
-      {
-        selected: false,
-        hidden: false,
-        keyframes: [
-          {
-            cursor: 'default',
-            val: 2000,
-          },
-          {
-            val: 2500,
-          },
-          {
-            val: 2600,
-          },
-        ],
-      },
-      {
-        hidden: true,
-        locked: true,
-        keyframes: [
-          {
-            val: 1000,
-          },
-          {
-            val: 1500,
-          },
-          {
-            val: 2000,
-          },
-        ],
-      },
-      {
-        title: 'Groups (Limited)',
-        locked: true,
-        keyframes: [
-          {
-            val: 40,
-            max: 850,
-            group: 'a',
-          },
-          {
-            val: 800,
-            max: 900,
-            group: 'a',
-          },
-          {
-            min: 1000,
-            max: 3400,
-            val: 1900,
-            group: 'b',
-          },
-          {
-            val: 3000,
-            max: 3500,
-            group: 'b',
-          },
-          {
-            min: 3500,
-            val: 4000,
-            group: 'c',
-          },
-        ],
-      },
-      {
-        keyframes: [
-          {
-            val: 100,
-          },
-          {
-            val: 3410,
-          },
-          {
-            val: 2000,
-          },
-        ],
-      },
-      {
-        locked: true,
-        title: 'Style Customized',
-        keyframesStyle: {
-          width: 5,
-          strokeColor: 'red',
-        },
-        keyframes: [
-          {
-            val: 90,
-          },
-          {
-            val: 3000,
-          },
-        ],
-      }, {
-        locked: true,
-      }, {
-        title: 'Max Value',
-        max: 4000,
-        keyframes: [
-          {
-            width: 4,
-            height: 20,
-            group: 'block',
-            shape: 'rect',
-            fillColor: 'Red',
-            strokeColor: 'red',
-            val: 4000,
-            selectable: false,
-            draggable: false,
-          },
-          {
-            val: 1500,
-          },
-          {
-            val: 2500,
-          },
-        ],
-      }, {}, {}, {}, {}, {}, {},
-    ];
-    setLayers(rows);
-
+    // console.log(layers);
     timeline.initialize({
       id: 'timeline',
       headerHeight: 45,
@@ -195,7 +68,7 @@ const TimeLineView = () => {
         },
       },
     });
-    timeline.setModel({ rows });
+    timeline.setModel({ rows: layers });
     timeline.onTimeChanged((event) => {
       console.log('onTimeChanged', event);
     });
@@ -205,20 +78,36 @@ const TimeLineView = () => {
     const headerElement = document.getElementById('outline-header');
     headerElement.style.maxHeight = `${options.headerHeight}px`;
     headerElement.style.minHeight = `${options.headerHeight}px`;
-  }, [onScrollChange, timeline]);
+    setIsLoaded(true);
+  }, [timeline]);
 
-  if (!timeline) return null;
+  useEffect(() => {
+    if (!timeline) return;
+    console.log('layers--------------------', props.layers);
+    timeline.setModel({ rows: props.layers });
+  }, [props.layers]);
+
+  const addNewLayer = () => {
+    props.addNewLayer({});
+  };
+
+  if (!timeline) return <></>;
   const options = timeline.getOptions();
+
+  const {
+    layers, deleteLayer, setCurLayer, curLayer,
+  } = props;
 
   return (
     <div className="timeline-container flex-grow-1">
       <div className="outline">
         <div className="outline-header" id="outline-header">
           <div className="d-flex top-bar">
-            <Icon.FilePlus size={16} />
-            <Icon.Trash2 size={16} />
+            <Icon.FilePlus onClick={addNewLayer} size={16} />
           </div>
           <div className="d-flex justify-content-end bottom-bar">
+            <Icon.Edit2 size={12} />
+            <Icon.Trash2 size={12} />
             <Icon.Eye size={12} />
             <Icon.Lock size={12} />
           </div>
@@ -229,23 +118,40 @@ const TimeLineView = () => {
         >
           <div className="outline-items" id="outline-container">
             {
-              layers.map((item, index) => (
+              isLoaded ? layers.map((item, index) => (
                 <div
                   key={index}
-                  className="outline-node d-flex justify-content-between"
+                  className={`outline-node d-flex justify-content-between ${item.id === curLayer.id ? 'active' : ''}`}
                   style={{
                     maxHeight: options.rowsStyle.height,
                     minHeight: options.rowsStyle.height,
                     marginBottom: options.rowsStyle.marginBottom,
                   }}
+                  onClick={() => setCurLayer(item)}
                 >
-                  <span>{item.title || `Track ${index}`}</span>
+                  {
+                    item.id === curLayer.id && isEdit ? (
+                      <TextField
+                        value={curLayer.title}
+                        onChange={(e) => setCurLayer({
+                          ...curLayer,
+                          title: e.target.value,
+                        })}
+                      />
+                    )
+                      : <span>{item.title}</span>
+                  }
                   <div className="row-icons">
+                    {
+                      item.id === curLayer.id && isEdit ? <Icon.Save size={12} onClick={() => setIsEdit(false)} />
+                        : <Icon.Edit2 size={12} onClick={() => setIsEdit(true)} />
+                    }
+                    <Icon.Trash2 size={12} onClick={() => deleteLayer(item.id)} />
                     { item.hidden ? <Icon.EyeOff size={12} /> : <Icon.Eye size={12} /> }
                     { item.locked ? <Icon.Lock size={12} /> : <Icon.Unlock size={12} /> }
                   </div>
                 </div>
-              ))
+              )) : ''
             }
           </div>
         </div>
@@ -255,4 +161,26 @@ const TimeLineView = () => {
   );
 };
 
-export default TimeLineView;
+TimeLineView.propTypes = {
+  layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+  curLayer: PropTypes.object.isRequired,
+  addNewLayer: PropTypes.func.isRequired,
+  deleteLayer: PropTypes.func.isRequired,
+  setCurLayer: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = ({ layer }) => ({
+  layers: layer.layers,
+  curLayer: layer.curLayer,
+});
+
+const mapDispatchToProps = (dispatch) => bindActionCreators(
+  {
+    addNewLayer: LayerAction.addNewLayer,
+    deleteLayer: LayerAction.deleteLayer,
+    setCurLayer: LayerAction.setCurLayer,
+  },
+  dispatch,
+);
+
+export default connect(mapStateToProps, mapDispatchToProps)(TimeLineView);

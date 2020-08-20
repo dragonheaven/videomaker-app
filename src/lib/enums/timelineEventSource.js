@@ -1,10 +1,10 @@
-
-Object.defineProperty(exports, '__esModule', { value: true });
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.TimelineEventSource = void 0;
-let TimelineEventSource;
+var TimelineEventSource;
 (function (TimelineEventSource) {
-  TimelineEventSource.User = 'user';
-  TimelineEventSource.Programmatically = 'programmatically';
-  TimelineEventSource.SetTimeMethod = 'setTimeMethod';
-}(TimelineEventSource = exports.TimelineEventSource || (exports.TimelineEventSource = {})));
-// # sourceMappingURL=timelineEventSource.js.map
+    TimelineEventSource["User"] = "user";
+    TimelineEventSource["Programmatically"] = "programmatically";
+    TimelineEventSource["SetTimeMethod"] = "setTimeMethod";
+})(TimelineEventSource = exports.TimelineEventSource || (exports.TimelineEventSource = {}));
+//# sourceMappingURL=timelineEventSource.js.map

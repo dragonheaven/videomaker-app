@@ -1,5 +1,4 @@
 import { TimelineKeyframeStyle } from './timelineKeyframeStyle';
-
 export interface TimelineRowStyle {
     /**
      * Size of the row in pixels, can be set to 'auto'

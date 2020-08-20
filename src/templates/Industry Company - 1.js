@@ -1,5 +1,4 @@
-const stage = {}; const
-  exportRoot = {};
+let stage = {}, exportRoot = {};
 
 const template = (function (cjs, an) {
   let p; // shortcut to reference prototypes

@@ -1,22 +1,22 @@
-
-Object.defineProperty(exports, '__esModule', { value: true });
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.TimelineSelectionMode = void 0;
 /**
  * TimelineView selection mode.
  */
-let TimelineSelectionMode;
+var TimelineSelectionMode;
 (function (TimelineSelectionMode) {
-  /**
+    /**
      * Select new items. deselect changed.
      */
-  TimelineSelectionMode.Normal = 'normal';
-  /**
+    TimelineSelectionMode["Normal"] = "normal";
+    /**
      * Append current selection.
      */
-  TimelineSelectionMode.Append = 'append';
-  /**
+    TimelineSelectionMode["Append"] = "append";
+    /**
      * Revert selection of a specified nodes.
      */
-  TimelineSelectionMode.Revert = 'revert';
-}(TimelineSelectionMode = exports.TimelineSelectionMode || (exports.TimelineSelectionMode = {})));
-// # sourceMappingURL=timelineSelectionMode.js.map
+    TimelineSelectionMode["Revert"] = "revert";
+})(TimelineSelectionMode = exports.TimelineSelectionMode || (exports.TimelineSelectionMode = {}));
+//# sourceMappingURL=timelineSelectionMode.js.map

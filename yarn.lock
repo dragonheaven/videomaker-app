@@ -1002,6 +1002,28 @@
   resolved "https://registry.yarnpkg.com/@csstools/normalize.css/-/normalize.css-9.0.1.tgz#c27b391d8457d1e893f1eddeaf5e5412d12ffbb5"
   integrity sha512-6It2EVfGskxZCQhuykrfnALg7oVeiI6KclWSmGDqB0AiInVrTGB9Jp9i4/Ad21u9Jde/voVQz6eFX/eSg/UsPA==
 
+"@daybrush/drag@^0.9.1":
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/@daybrush/drag/-/drag-0.9.1.tgz#bfda700386323cf21366af38e662b30ca1341d7c"
+  integrity sha512-Y1/Ih0xJAgf1SitmVMmY4ylXhzRk+xW2jylj9l5DLGXFTmKYcC5kEC4lFhMRCLGO+sP7NFDZtky830eHS5cA0Q==
+  dependencies:
+    "@daybrush/utils" "^0.10.0"
+
+"@daybrush/utils@^0.10.0", "@daybrush/utils@^0.10.1":
+  version "0.10.5"
+  resolved "https://registry.yarnpkg.com/@daybrush/utils/-/utils-0.10.5.tgz#96427101f5de99ceb13bce1f09916374e62c84f1"
+  integrity sha512-VCPbgJgImkUmGHX33drZJh/5FYBhfSM+EFqlBY7fzKIahBGEemjYfninVSp9BdzqF9P2MyCh7R3hgxmySXLEzg==
+
+"@daybrush/utils@^0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@daybrush/utils/-/utils-0.13.0.tgz#48760a6382d01fb6107fdabf00d7275b260ace94"
+  integrity sha512-NKomXAajIL2Z/GPVv75DPF85ghJjHiscJ15yRjb0JJGYxz2p9RqUkZZwMMQnK8HHAKajZTJj61GmSRyh960Cnw==
+
+"@egjs/component@^2.1.2":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@egjs/component/-/component-2.1.2.tgz#c466a0a6fc6ba2d479814dcbe6ee4643c25a2e5b"
+  integrity sha512-7tnPiqxbSZ0porzlm0+/O3qZdanMj0zOq0sb17wQXuaRG49XKKKJaO+SacGnZDqf308N5hzJ0m9fZ4+j+VBvXA==
+
 "@emotion/hash@^0.7.1":
   version "0.7.3"
   resolved "https://registry.yarnpkg.com/@emotion/hash/-/hash-0.7.3.tgz#a166882c81c0c6040975dd30df24fae8549bd96f"
@@ -3372,6 +3394,14 @@ css-select@^2.0.0:
     domutils "^1.7.0"
     nth-check "^1.0.2"
 
+css-styled@^0.2.1:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/css-styled/-/css-styled-0.2.2.tgz#22b9fd0ed5ca82adb105d35e12f3136e1a345e65"
+  integrity sha512-Lg2CYHo2iqVYq7erpAO9asZDB8m4UYiqgyu+wpcKg6/jrumw5VWb8z184t3gsav7dnPrv7p7bh/hgq8ZUJ5CoA==
+  dependencies:
+    "@daybrush/utils" "^0.10.1"
+    string-hash "^1.1.3"
+
 css-to-react-native@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/css-to-react-native/-/css-to-react-native-3.0.0.tgz#62dbe678072a824a689bcfee011fc96e02a7d756"
@@ -4898,6 +4928,11 @@ fragment-cache@^0.2.1:
   integrity sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=
   dependencies:
     map-cache "^0.2.2"
+
+framework-utils@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/framework-utils/-/framework-utils-0.2.1.tgz#207976eeca139ce195561d49bf94c7792c173b52"
+  integrity sha512-KSB3kl/hlR4LiKBbK3hEydNFgj1fM3ymmxTmT9doeUVaMr7mTpIRmeTJ3/aCMl52Z0/It8Fm5pEJBQRLcb/yCw==
 
 fresh@0.5.2:
   version "0.5.2"
@@ -6849,6 +6884,20 @@ jsx-ast-utils@^2.1.0, jsx-ast-utils@^2.2.1:
     array-includes "^3.0.3"
     object.assign "^4.1.0"
 
+keycode@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/keycode/-/keycode-2.2.0.tgz#3d0af56dc7b8b8e5cba8d0a97f107204eec22b04"
+  integrity sha1-PQr1bce4uOXLqNCpfxByBO7CKwQ=
+
+keycon@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/keycon/-/keycon-0.5.0.tgz#bd97df5dd76ba813e629be40e2b10b4ce2e22b40"
+  integrity sha512-y/U+QenSawxhujHvKn6849rtwjgspZbB2cpxEKih5KKfKnXyhfUhidS1ptfuHA9bGt4LVRzxXTQY3TsWmdO97A==
+  dependencies:
+    "@daybrush/utils" "^0.10.0"
+    "@egjs/component" "^2.1.2"
+    keycode "^2.2.0"
+
 killable@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/killable/-/killable-1.0.1.tgz#4c8ce441187a061c7474fb87ca08e2a638194892"
@@ -8063,6 +8112,13 @@ optionator@^0.8.1, optionator@^0.8.2:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
     wordwrap "~1.0.0"
+
+order-map@^0.1.0:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/order-map/-/order-map-0.1.1.tgz#ab2735f70f462b873b1b09408379cc5e42fb977a"
+  integrity sha512-cpddEP8C8nFQ2NXPkmaQ7JnZ8hwuwPWNGG1bGR36pCWe6rEHHpr/L8DZ4q2J6ZR7kSuRsnDDybYAfTD7YrRNNw==
+  dependencies:
+    "@daybrush/utils" "^0.13.0"
 
 original@^1.0.0:
   version "1.0.2"
@@ -9440,6 +9496,13 @@ react-app-polyfill@^1.0.4:
     regenerator-runtime "0.13.3"
     whatwg-fetch "3.0.0"
 
+react-css-styler@^0.4.0:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/react-css-styler/-/react-css-styler-0.4.1.tgz#a6fe111b48b74b18f968c4a0bab4546409b58efe"
+  integrity sha512-nAJihRuGRHhzHbrs6dhlFe5xXHgXGFa2OngXKMEHSoaQ4i/kBc1q6CIFfdbVrhGS5Y/G2vtxoqJDW8yG+uPuMw==
+  dependencies:
+    "@daybrush/utils" "^0.10.0"
+
 react-dev-utils@^9.1.0:
   version "9.1.0"
   resolved "https://registry.yarnpkg.com/react-dev-utils/-/react-dev-utils-9.1.0.tgz#3ad2bb8848a32319d760d0a84c56c14bdaae5e81"
@@ -9531,6 +9594,13 @@ react-popper@^1.3.4:
     typed-styles "^0.0.7"
     warning "^4.0.2"
 
+react-pure-props@^0.1.5:
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/react-pure-props/-/react-pure-props-0.1.5.tgz#f9d11255d4f52cba1c833d78e6f9b246a3a644db"
+  integrity sha512-U9meZmY0hf4tJVv4T6T7aP6Hfu4LCLddPZuBNiSuxmdz0RfiFxz6ly8rX83iRbGOf+XV6ltpzsJ27pNFwspRrQ==
+  dependencies:
+    shallowequal "^1.1.0"
+
 react-redux@^7.1.1:
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-7.1.1.tgz#ce6eee1b734a7a76e0788b3309bf78ff6b34fa0a"
@@ -9585,6 +9655,19 @@ react-router@5.1.2, react-router@^5.1.2:
     react-is "^16.6.0"
     tiny-invariant "^1.0.2"
     tiny-warning "^1.0.0"
+
+react-scenejs-timeline@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/react-scenejs-timeline/-/react-scenejs-timeline-0.3.1.tgz#8797e2b8652347b522d4df7ccc298540ad640e2d"
+  integrity sha512-ZGWQd91MCE9eOJLWnrVEvTajKpCnDMJTftK4+rTP9LTd5w1wkSm05nq0KwLd+gY5iCdcFzWvax9f0OqhZX4C7Q==
+  dependencies:
+    "@daybrush/drag" "^0.9.1"
+    "@daybrush/utils" "^0.10.1"
+    framework-utils "^0.2.1"
+    keycon "^0.5.0"
+    react-css-styler "^0.4.0"
+    react-pure-props "^0.1.5"
+    scenejs "^1.1.4"
 
 react-scripts@3.2.0:
   version "3.2.0"
@@ -10217,6 +10300,15 @@ saxes@^3.1.9:
   dependencies:
     xmlchars "^2.1.1"
 
+scenejs@^1.1.4, scenejs@^1.3.0:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/scenejs/-/scenejs-1.3.2.tgz#5361db6b109acb29675e23cb71379fa874e12a76"
+  integrity sha512-D2Svx+h1J35LU5t15NMrprWW9nf4CSHnbMCpozOEKtLoGQWBYoCtympuhPQsdujfLlxqWgrZVAIW8sDwYVNyuA==
+  dependencies:
+    "@daybrush/utils" "^0.13.0"
+    css-styled "^0.2.1"
+    order-map "^0.1.0"
+
 scheduler@^0.17.0:
   version "0.17.0"
   resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.17.0.tgz#7c9c673e4ec781fac853927916d1c426b6f3ddfe"
@@ -10748,6 +10840,11 @@ string-argv@^0.3.0:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/string-argv/-/string-argv-0.3.1.tgz#95e2fbec0427ae19184935f816d74aaa4c5c19da"
   integrity sha512-a1uQGz7IyVy9YwhqjZIZu1c8JO8dNIe20xBmSS6qu9kv++k3JGzCVmprbNN5Kn+BgzD5E7YYwg1CcjuJMRNsvg==
+
+string-hash@^1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/string-hash/-/string-hash-1.1.3.tgz#e8aafc0ac1855b4666929ed7dd1275df5d6c811b"
+  integrity sha1-6Kr8CsGFW0Zmkp7X3RJ1311sgRs=
 
 string-length@^2.0.0:
   version "2.0.0"

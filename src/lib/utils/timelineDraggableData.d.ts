@@ -1,7 +1,6 @@
 import { TimelineElement } from './timelineElement';
 import { TimelineElementType } from '../enums/timelineElementType';
 import { TimelineValues } from './timelineValues';
-
 export interface TimelineDraggableData extends TimelineValues {
     changed: boolean;
     /**

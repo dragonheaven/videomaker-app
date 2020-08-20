@@ -1,27 +1,26 @@
-
-const __extends = (this && this.__extends) || (function () {
-  var extendStatics = function (d, b) {
-    extendStatics = Object.setPrototypeOf
-            || ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; })
-            || function (d, b) { for (const p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return extendStatics(d, b);
-  };
-  return function (d, b) {
-    extendStatics(d, b);
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-  };
-}());
-Object.defineProperty(exports, '__esModule', { value: true });
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.TimelineDragEvent = void 0;
-const timelineBaseEvent_1 = require('./timelineBaseEvent');
-
-const TimelineDragEvent = /** @class */ (function (_super) {
-  __extends(TimelineDragEvent, _super);
-  function TimelineDragEvent() {
-    return _super !== null && _super.apply(this, arguments) || this;
-  }
-  return TimelineDragEvent;
+var timelineBaseEvent_1 = require("./timelineBaseEvent");
+var TimelineDragEvent = /** @class */ (function (_super) {
+    __extends(TimelineDragEvent, _super);
+    function TimelineDragEvent() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return TimelineDragEvent;
 }(timelineBaseEvent_1.TimelineBaseEvent));
 exports.TimelineDragEvent = TimelineDragEvent;
-// # sourceMappingURL=timelineDragEvent.js.map
+//# sourceMappingURL=timelineDragEvent.js.map

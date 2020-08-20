@@ -8,7 +8,7 @@ import RightSideBar from '../../components/RightSideBar';
 import SceneView from '../../components/SceneView';
 import HorizontalRuler from '../../components/HorizontalRuler';
 import VerticalRuler from '../../components/VerticalRuler';
-import TopView from '../../components/TopView';
+import TopView from "../../components/TopView";
 
 function Home({ animationViewSize }) {
   return (

@@ -131,7 +131,7 @@ const AnimationView = ({
     setExportRoot(newExportRoot);
 
     stage.addChildAt(newExportRoot, 0);
-  }, [AdobeAn, curTemplate, setTemplateProperty, stage]);
+  }, [curTemplate]);
 
   useEffect(() => {
     if (!exportRoot) return;
@@ -150,13 +150,13 @@ const AnimationView = ({
     Object.entries(shapes).forEach(([key, shape]) => {
       newExportRoot[key]._shape.visible = shape.visible;
     });
-  }, [exportRoot, templateProperty]);
+  }, [templateProperty]);
 
   useEffect(() => {
     if (!stage) return;
     window.createjs.Ticker.paused = !!paused;
     stage.update();
-  }, [paused, stage]);
+  }, [paused]);
 
   const resizeCanvasView = () => {
     const canvasView = document.getElementById('canvas_view');
@@ -183,13 +183,13 @@ const AnimationView = ({
     // eslint-disable-next-line max-len
     makeResponsive(true, 'both', false, 1, [canvas, animContainer, domOverlayContainer], newStage, { width: 1280, height: 720 });
     resizeCanvasView();
-  }, [resizeCanvasView]);
+  }, []);
 
   useEffect(() => {
     if (!stage) return;
     window.createjs.Ticker.framerate = 24;
     window.createjs.Ticker.addEventListener('tick', handleTick);
-  }, [handleTick, stage]);
+  }, [stage]);
 
   return (
     <div id="canvas_view" className="animation-view d-flex justify-content-center align-items-center">

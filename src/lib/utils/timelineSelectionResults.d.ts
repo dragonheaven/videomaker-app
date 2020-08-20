@@ -1,5 +1,4 @@
 import { TimelineKeyframe } from '../timelineKeyframe';
-
 export interface TimelineSelectionResults {
     /**
      * Changed nodes.
