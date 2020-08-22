@@ -27,3 +27,10 @@ export function setPaused(data) {
     data,
   };
 }
+
+export function setTemplateBackground(data) {
+  return {
+    type: ACTION.SET_TEMPLATE_BACKGROUND,
+    data,
+  };
+}

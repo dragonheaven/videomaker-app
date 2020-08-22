@@ -5,42 +5,49 @@ const initialState = {
     {
       id: 0,
       selected: false,
-      draggable: false,
-      locked: true,
-      hidden: false,
-      title: 'template',
-
-      keyframes: [
-        {
-          val: 40,
-        },
-        {
-          val: 3000,
-          selected: false,
-        },
-      ],
-    },
-    {
-      id: 1,
-      selected: false,
       hidden: false,
       title: 'circle',
+      shape: {
+        type: 'circle',
+        x: 140,
+        y: 140,
+        radius: 40,
+        fillColor: 'red',
+      },
       keyframes: [
         {
           cursor: 'default',
-          val: 2000,
+          type: 'wait',
+          val: 300,
         },
         {
-          val: 2500,
+          type: 'to',
+          data: { scaleX: 2, scaleY: 2 },
+          val: 1300,
         },
         {
-          val: 2600,
+          type: 'to',
+          data: { alpha: 1, x: 700 },
+          val: 5100,
+        },
+        {
+          type: 'to',
+          data: {
+            scaleX: 1, scaleY: 1, y: 500, x: 0,
+          },
+          val: 8100,
+        },
+        {
+          type: 'to',
+          data: { y: 0, x: 0 },
+          val: 10100,
         },
       ],
     },
   ],
   curLayer: {},
-  maxLayerId: 2,
+  maxLayerId: 1,
+  maxTime: 10100,
 };
 
 export default function layerReducer(state = initialState, action) {
@@ -70,6 +77,26 @@ export default function layerReducer(state = initialState, action) {
       return {
         ...state,
         layers: state.layers.filter((item) => item.id !== action.layerId),
+      };
+    case ACTION.CHANGE_LAYER_ORDER:
+      const indexOfLayer = state.layers.findIndex((item) => item.id === action.layerId);
+      const layer1 = state.layers.find((item) => item.id === action.layerId);
+      const layer2 = state.layers[indexOfLayer + action.amount];
+      const newLayers = state.layers.map((item, index) => {
+        if (index !== indexOfLayer && index !== indexOfLayer + action.amount) return item;
+        if (index === indexOfLayer) return layer2;
+        return layer1;
+      });
+      return {
+        ...state,
+        layers: newLayers,
+      };
+    case ACTION.SET_KEY_FRAMES:
+      const newMaxTime = action.data.reduce((max, item) => (max > item.val ? max : item.val), 0);
+      return {
+        ...state,
+        layers: state.layers.map((item) => (item.id === action.layerId ? { ...item, keyframes: action.data } : item)),
+        maxTime: newMaxTime,
       };
     default:
       return state;

@@ -20,3 +20,19 @@ export function deleteLayer(layerId) {
     layerId,
   };
 }
+
+export function changeLayerOrder(layerId, amount) {
+  return {
+    type: ACTION.CHANGE_LAYER_ORDER,
+    layerId,
+    amount,
+  };
+}
+
+export function setKeyframes(layerId, data) {
+  return {
+    type: ACTION.SET_KEY_FRAMES,
+    layerId,
+    data,
+  };
+}

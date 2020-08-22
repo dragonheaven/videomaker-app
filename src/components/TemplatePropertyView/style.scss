@@ -1,0 +1,25 @@
+.template-view {
+    .container {
+        padding: 0 15px;
+    }
+
+    .sub-title {
+        font-size: 14px;
+    }
+
+    .divider {
+        background-color: white;
+        margin: 0 0 10px 0;
+    }
+
+    label {
+        //color: gray;
+        color: #bcbcbc;
+        min-width: 100px;
+    }
+
+    input {
+        color: #f0f0f0;
+        background-color: #535353;
+    }
+}

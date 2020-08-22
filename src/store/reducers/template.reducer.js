@@ -58,12 +58,17 @@ const initialState = {
     text2: '',
     texts: [],
     shapes: [],
+    background: {
+      color: '',
+      image: '',
+      show: true,
+    },
   },
   animationViewSize: {
     width: 0,
     height: 0,
   },
-  paused: false,
+  paused: true,
 };
 
 export default function templateReducer(state = initialState, action) {
@@ -71,7 +76,10 @@ export default function templateReducer(state = initialState, action) {
     case ACTION.SET_TEMPLATE_PROPERTY:
       return {
         ...state,
-        property: { ...action.data },
+        property: {
+          ...state.property,
+          ...action.data,
+        },
       };
 
     case ACTION.SET_CUR_TEMPLATE:
@@ -91,7 +99,14 @@ export default function templateReducer(state = initialState, action) {
         ...state,
         paused: action.data,
       };
-
+    case ACTION.SET_TEMPLATE_BACKGROUND:
+      return {
+        ...state,
+        property: {
+          ...state.property,
+          background: action.data,
+        },
+      };
     default:
       return state;
   }

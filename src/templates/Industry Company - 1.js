@@ -1,4 +1,5 @@
-let stage = {}, exportRoot = {};
+const stage = {}; const
+  exportRoot = {};
 
 const template = (function (cjs, an) {
   let p; // shortcut to reference prototypes
@@ -45,7 +46,7 @@ const template = (function (cjs, an) {
 
   (lib.zxxcds = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -72,7 +73,7 @@ const template = (function (cjs, an) {
 
   (lib.text2 = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -102,7 +103,7 @@ const template = (function (cjs, an) {
 
   (lib.text1 = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -132,7 +133,7 @@ const template = (function (cjs, an) {
 
   (lib.shape13content = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -158,7 +159,7 @@ const template = (function (cjs, an) {
 
   (lib.shape12content = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -184,7 +185,7 @@ const template = (function (cjs, an) {
 
   (lib.shape11content = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -210,7 +211,7 @@ const template = (function (cjs, an) {
 
   (lib.shape10content = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -236,7 +237,7 @@ const template = (function (cjs, an) {
 
   (lib.shape1content = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -262,7 +263,7 @@ const template = (function (cjs, an) {
 
   (lib.qwsaqw = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -333,7 +334,7 @@ const template = (function (cjs, an) {
 
   (lib.qwewq = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -380,7 +381,7 @@ const template = (function (cjs, an) {
 
   (lib.azxsaz = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -411,7 +412,7 @@ const template = (function (cjs, an) {
 
   (lib.azxdsax = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -474,7 +475,7 @@ const template = (function (cjs, an) {
 
   (lib.asdfg = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -557,7 +558,7 @@ const template = (function (cjs, an) {
 
   (lib.shape13 = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -583,7 +584,7 @@ const template = (function (cjs, an) {
 
   (lib.shape12 = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -609,7 +610,7 @@ const template = (function (cjs, an) {
 
   (lib.shape11 = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -635,7 +636,7 @@ const template = (function (cjs, an) {
 
   (lib.shape10 = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -661,7 +662,7 @@ const template = (function (cjs, an) {
 
   (lib.shape1 = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -687,7 +688,7 @@ const template = (function (cjs, an) {
 
   (lib.bbfds = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;
@@ -1038,7 +1039,7 @@ const template = (function (cjs, an) {
   // stage content:
   (lib.IndustryCompany1 = function (mode, startPosition, loop, reversed) {
     if (loop == null) {
-      loop = true;
+      loop = false;
     }
     if (reversed == null) {
       reversed = false;

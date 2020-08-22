@@ -6,15 +6,18 @@ import './style.scss';
 import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import * as LayerAction from '../../store/actions/layer.action';
+import { TextField } from '@material-ui/core';
 
+import * as LayerAction from '../../store/actions/layer.action';
+import * as TimeAction from '../../store/actions/time.action';
 import { Timeline } from '../../lib/animation-timeline';
-import {TextField} from "@material-ui/core";
 
 const TimeLineView = (props) => {
   const [timeline, setTimeline] = useState();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  // const [preValue, setPreValue] = useState(null);
+  const preValue = null;
 
   const onScrollChange = (obj) => {
     if (!timeline) return;
@@ -31,6 +34,33 @@ const TimeLineView = (props) => {
     }
   };
 
+  const onTimeChanged = (event) => {
+    props.setCurTime(event.val);
+  };
+
+  const onDragStarted = (obj) => {
+    // console.log(obj.val, obj, 'dragstarted');
+    // preValue = obj.target.val;
+  };
+
+  const onDragFinished = (obj) => {
+    // console.log(obj.val, preValue);
+    // setPreValue(null);
+    console.log(obj.elements[0].row, preValue, 'dragfinished');
+    const layer = obj.elements[0].row;
+    props.setKeyframes(layer.id, layer.keyframes);
+  };
+
+  const onDrag = (obj) => {
+    // console.log(obj.target.val, 'drag');
+    // setPreValue(obj.val);
+  };
+
+  useEffect(() => {
+    if (!timeline) return;
+    timeline.setTime(props.curTime);
+  }, [props.curTime, timeline]);
+
   useEffect(() => {
     const newTimeline = new Timeline();
     setTimeline(newTimeline);
@@ -40,7 +70,6 @@ const TimeLineView = (props) => {
     const { layers } = props;
     if (!timeline) return;
 
-    // console.log(layers);
     timeline.initialize({
       id: 'timeline',
       headerHeight: 45,
@@ -69,26 +98,35 @@ const TimeLineView = (props) => {
       },
     });
     timeline.setModel({ rows: layers });
-    timeline.onTimeChanged((event) => {
-      console.log('onTimeChanged', event);
-    });
+    timeline.onTimeChanged(onTimeChanged);
     timeline.onScroll(onScrollChange);
+    timeline.onDragStarted(onDragStarted);
+    timeline.onDrag(onDrag);
+    timeline.onDragFinished(onDragFinished);
+
 
     const options = timeline.getOptions();
     const headerElement = document.getElementById('outline-header');
     headerElement.style.maxHeight = `${options.headerHeight}px`;
     headerElement.style.minHeight = `${options.headerHeight}px`;
     setIsLoaded(true);
-  }, [timeline]);
+  }, [onDragFinished, onScrollChange, onTimeChanged, props, timeline]);
 
   useEffect(() => {
     if (!timeline) return;
-    console.log('layers--------------------', props.layers);
     timeline.setModel({ rows: props.layers });
-  }, [props.layers]);
+  }, [props.layers, timeline]);
 
   const addNewLayer = () => {
     props.addNewLayer({});
+  };
+
+  const changeLayerOrder = (amount) => {
+    const { curLayer, layers } = props;
+    if (!curLayer) return;
+    const indexOfCurLayer = layers.findIndex((item) => item.id === curLayer.id);
+    if (indexOfCurLayer + amount < 0 || indexOfCurLayer + amount >= layers.length) return;
+    props.changeLayerOrder(curLayer.id, amount);
   };
 
   if (!timeline) return <></>;
@@ -106,10 +144,8 @@ const TimeLineView = (props) => {
             <Icon.FilePlus onClick={addNewLayer} size={16} />
           </div>
           <div className="d-flex justify-content-end bottom-bar">
-            <Icon.Edit2 size={12} />
-            <Icon.Trash2 size={12} />
-            <Icon.Eye size={12} />
-            <Icon.Lock size={12} />
+            <Icon.ArrowUp size={14} onClick={() => changeLayerOrder(-1)} />
+            <Icon.ArrowDown size={14} onClick={() => changeLayerOrder(1)} />
           </div>
         </div>
         <div
@@ -167,11 +203,16 @@ TimeLineView.propTypes = {
   addNewLayer: PropTypes.func.isRequired,
   deleteLayer: PropTypes.func.isRequired,
   setCurLayer: PropTypes.func.isRequired,
+  setCurTime: PropTypes.func.isRequired,
+  curTime: PropTypes.number.isRequired,
+  changeLayerOrder: PropTypes.func.isRequired,
+  setKeyframes: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = ({ layer }) => ({
+const mapStateToProps = ({ layer, time }) => ({
   layers: layer.layers,
   curLayer: layer.curLayer,
+  curTime: time.curTime,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
@@ -179,6 +220,9 @@ const mapDispatchToProps = (dispatch) => bindActionCreators(
     addNewLayer: LayerAction.addNewLayer,
     deleteLayer: LayerAction.deleteLayer,
     setCurLayer: LayerAction.setCurLayer,
+    setCurTime: TimeAction.setCurTime,
+    changeLayerOrder: LayerAction.changeLayerOrder,
+    setKeyframes: LayerAction.setKeyframes,
   },
   dispatch,
 );

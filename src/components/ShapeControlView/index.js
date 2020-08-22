@@ -10,6 +10,7 @@ const ShapeControlView = ({ curProperty, curTemplate, setTemplateProperty }) => 
   const [curShapeElementKey, setCurShapeElementKey] = useState();
   const [curShapeElement, setCurShapeElement] = useState();
   const [isShapeOpen, setIsShapeOpen] = useState(true);
+
   useEffect(() => {
     setCurShapeElementKey(null);
     setCurShapeElement(null);
