@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import * as Icon from 'react-feather';
 
-
 import './style.scss';
 import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
@@ -10,6 +9,8 @@ import { TextField } from '@material-ui/core';
 
 import * as LayerAction from '../../store/actions/layer.action';
 import * as TimeAction from '../../store/actions/time.action';
+import * as TemplateAction from '../../store/actions/template.action';
+
 import { Timeline } from '../../lib/timeline/animation-timeline';
 
 const TimeLineView = (props) => {
@@ -37,13 +38,10 @@ const TimeLineView = (props) => {
   };
 
   const onDragStarted = () => {
-    if (!props.paused) return;
   };
 
   const onDragFinished = (obj) => {
-    if (!props.paused) return;
     const layer = obj.elements[0].row;
-    window.createjs.Tween.removeAllTweens();
     props.setKeyframes(layer.id, layer.keyframes);
   };
 
@@ -98,7 +96,6 @@ const TimeLineView = (props) => {
     timeline.onDragStarted(onDragStarted);
     timeline.onDrag(onDrag);
     timeline.onDragFinished(onDragFinished);
-
 
     const options = timeline.getOptions();
     const headerElement = document.getElementById('outline-header');
@@ -172,7 +169,7 @@ const TimeLineView = (props) => {
                       <TextField
                         value={form.title}
                         onChange={(e) => setLayerData(curLayer,
-                          { title: e.target.value })}
+                          { title: e.target.value, shape: { ...form.shape, name: e.target.value } })}
                       />
                     )
                       : <span>{item.title}</span>
@@ -189,7 +186,6 @@ const TimeLineView = (props) => {
                         ? <Icon.EyeOff size={12} onClick={() => setVisible(item.id, true)} />
                         : <Icon.Eye size={12} onClick={() => setVisible(item.id, false)} />
                     }
-                    { item.locked ? <Icon.Lock size={12} /> : <Icon.Unlock size={12} /> }
                   </div>
                 </div>
               )) : ''
@@ -214,7 +210,6 @@ TimeLineView.propTypes = {
   setKeyframes: PropTypes.func.isRequired,
   setLayerData: PropTypes.func.isRequired,
   animationViewSize: PropTypes.object.isRequired,
-  paused: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = ({ layer, time, template }) => ({
@@ -234,6 +229,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators(
     changeLayerOrder: LayerAction.changeLayerOrder,
     setKeyframes: LayerAction.setKeyframes,
     setLayerData: LayerAction.setLayerData,
+    setPaused: TemplateAction.setPaused,
   },
   dispatch,
 );

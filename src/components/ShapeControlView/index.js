@@ -146,16 +146,21 @@ const ShapeControlView = ({ curLayer, layers, setLayerData }) => {
                 </div>
               )
             }
-            <div className="col-md-12 mb-2 mt-4 d-flex align-items-center">
-              <label className="mr-2">Angle:</label>
-              <Input
-                name="angle"
-                type="number"
-                placeholder="Angle"
-                value={form && form.shape && form.shape.angle ? form.shape.angle : 0}
-                onChange={(name, value) => mutateShape({ angle: parseInt(value, 10) })}
-              />
-            </div>
+            {
+              form && form.shape && (form.shape.type === 'star')
+              && (
+                <div className="col-md-12 mb-2 mt-4 d-flex align-items-center">
+                  <label className="mr-2">Angle:</label>
+                  <Input
+                    name="angle"
+                    type="number"
+                    placeholder="Angle"
+                    value={form && form.shape && form.shape.angle ? form.shape.angle : 0}
+                    onChange={(name, value) => mutateShape({ angle: parseInt(value, 10) })}
+                  />
+                </div>
+              )
+            }
             {
               form && form.shape && (form.shape.type !== 'text')
               && (
@@ -174,9 +179,9 @@ const ShapeControlView = ({ curLayer, layers, setLayerData }) => {
                         <Select
                           name="text-elements"
                           options={['solid', 'dash', 'dot']}
-                          value=""
+                          value={form && form.shape ? form.shape.strokeStyle : ''}
                           editable
-                          onChange={() => {}}
+                          onChange={(name, value) => mutateShape({ strokeStyle: value })}
                         />
                       </div>
                       <div className="col-md-4">

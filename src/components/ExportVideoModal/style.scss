@@ -1,4 +1,12 @@
 .export-video-modal {
     display: block;
     color: black;
+
+    .modal-body {
+        padding-top: 5px;
+    }
+    .btn-export {
+        min-width: 100px;
+        color: white;
+    }
 }

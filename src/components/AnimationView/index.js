@@ -6,7 +6,6 @@ import { bindActionCreators } from 'redux';
 import * as TemplateAction from '../../store/actions/template.action';
 import * as TimeAction from '../../store/actions/time.action';
 import * as LayerAction from '../../store/actions/layer.action';
-import * as StageAction from '../../store/actions/stage.action';
 
 import './style.scss';
 
@@ -28,7 +27,6 @@ const AnimationView = ({
   curLayer,
   addNewLayer,
   setLayerData,
-  setExportRoot,
   exportMode,
 }) => {
   const [stage, setStage] = useState();
@@ -92,16 +90,18 @@ const AnimationView = ({
   };
   const AdobeAn = {};
 
-  const handleTick = (event) => {
-    if (event.paused || !stage || exportMode) return;
+  const handleTick = (maxTime) => {
+    return (event) => {
+      if (event.paused || !stage || exportMode) return;
 
-    if (timeline.position < maxTime) {
-      setCurTime(timeline.position);
-    } else {
-      setCurTime(0);
-      setPaused(true);
-    }
-    stage.update();
+      if (timeline.position < maxTime) {
+        setCurTime(timeline.position);
+      } else {
+        setCurTime(0);
+        setPaused(true);
+      }
+      stage.update();
+    };
   };
 
   useEffect(() => {
@@ -110,25 +110,24 @@ const AnimationView = ({
     }
   }, [exportMode]);
 
-  const getPos = (x, y, w, h, i) => {
-    const size = 10;
+  const getPos = (x, y, w, h, cornSize, i) => {
     switch (i) {
       case 0:
-        return [x - size, y - size];
+        return [x - cornSize, y - cornSize];
       case 1:
-        return [x + w / 2 - size, y - size];
+        return [x + w / 2 - cornSize, y - cornSize];
       case 2:
-        return [x + w - size, y - size];
+        return [x + w - cornSize, y - cornSize];
       case 3:
-        return [x + w - size, y + h / 2 - size];
+        return [x + w - cornSize, y + h / 2 - cornSize];
       case 4:
-        return [x + w - size, y + h - size];
+        return [x + w - cornSize, y + h - cornSize];
       case 5:
-        return [x + w / 2 - size, y + h - size];
+        return [x + w / 2 - cornSize, y + h - cornSize];
       case 6:
-        return [x - size, y + h - size];
+        return [x - cornSize, y + h - cornSize];
       case 7:
-        return [x - size, y + h / 2 - size];
+        return [x - cornSize, y + h / 2 - cornSize];
       default:
         break;
     }
@@ -136,38 +135,95 @@ const AnimationView = ({
 
   const drawSelectors = () => {
     const layer = layers.find((item) => item.id === curLayer);
-    if (layer && layer.shape && layer.shape !== 'template') {
+    if (layer && layer.shape && layer.shape.type !== 'template') {
+      let selectRect;
+      let cornSize;
+      let strokeColor;
       switch (layer.shape.type) {
         case 'rect':
-          const dashRect = new window.createjs.Shape();
-          dashRect.name = `${layer.title}_select_dash`;
-          dashRect.graphics
-            .setStrokeStyle(2)
-            .setStrokeDash([5, 5], 0)
-            .beginStroke('#fff').drawRect(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
-
-          stage.addChild(dashRect);
-          stage.update();
-          for (let i = 0; i < 8; i++) {
-            const newShape = new window.createjs.Shape();
-            newShape.name = `${layer.title}_select_${i}`;
-            const [x, y] = getPos(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h, i);
-            newShape.graphics.beginFill('#0ff')
-              .setStrokeStyle(2).beginStroke('#000')
-              .drawRect(x, y, 20, 20);
-            stage.addChild(newShape);
-            stage.update();
-          }
+        case 'ellipse':
+          selectRect = {
+            x: layer.shape.x,
+            y: layer.shape.y,
+            w: layer.shape.w,
+            h: layer.shape.h,
+          };
+          cornSize = 15;
+          strokeColor = layer.shape.type === 'rect' ? '#fff' : '#000';
           break;
         case 'circle':
+        case 'star':
+          selectRect = {
+            x: layer.shape.x - layer.shape.radius,
+            y: layer.shape.y - layer.shape.radius,
+            w: layer.shape.radius * 2,
+            h: layer.shape.radius * 2,
+          };
+          cornSize = 15;
+          strokeColor = '#000';
+          break;
+        case 'text':
+          const txt = stage.getChildByName(layer.title);
+          selectRect = {
+            x: layer.shape.x,
+            y: layer.shape.y,
+            w: txt.getMeasuredWidth(),
+            h: txt.getMeasuredHeight(),
+          };
+          cornSize = 10;
+          strokeColor = '#4ee';
           break;
         default:
+          selectRect = {
+            x: 0,
+            y: 0,
+            w: 0,
+            h: 0,
+          };
+          cornSize = 0;
           break;
+      }
+      const dashRect = new window.createjs.Shape();
+      dashRect.name = '__select_dash';
+      dashRect.graphics
+        .setStrokeStyle(2)
+        .setStrokeDash([5, 5], 0)
+        .beginStroke(strokeColor).drawRect(selectRect.x, selectRect.y, selectRect.w, selectRect.h);
+
+      stage.addChild(dashRect);
+      stage.update();
+      for (let i = 0; i < 8; i++) {
+        const newShape = new window.createjs.Shape();
+        newShape.name = `__select_${i}`;
+        const [x, y] = getPos(selectRect.x, selectRect.y, selectRect.w, selectRect.h, cornSize / 2, i);
+        newShape.graphics.beginFill('#fff')
+          .setStrokeStyle(2).beginStroke('#000')
+          .drawRect(x, y, cornSize, cornSize);
+        stage.addChild(newShape);
+        stage.update();
       }
     }
   };
 
+  const removeSelectors = () => {
+    if (!stage) {
+      return;
+    }
+    const dashSelectRect = stage.getChildByName('__select_dash');
+    if (dashSelectRect) {
+      stage.removeChild(dashSelectRect);
+    }
+    for (let i = 0; i < 8; i++) {
+      const selectRect = stage.getChildByName(`__select_${i}`);
+      if (selectRect) {
+        stage.removeChild(selectRect);
+      }
+    }
+    stage.update();
+  };
+
   const drawLayers = () => {
+    stage.clear();
     for (let i = 0; i < stage.children.length; i++) {
       const children = stage.children[i];
       const layer = layers.find((item) => item.title === children.name);
@@ -194,6 +250,7 @@ const AnimationView = ({
               shape.text = layer.shape.text;
               shape.font = `${layer.shape.fontSize}px ${layer.shape.fontFamily}`;
               shape.color = layer.shape.color;
+              shape.rotation = layer.shape.angle;
             }
             break;
           case 'rect':
@@ -202,7 +259,7 @@ const AnimationView = ({
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
-                .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .setStrokeDash([0, 0], 0).setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
                 .drawRect(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
               stage.addChild(shape);
             } else {
@@ -214,7 +271,13 @@ const AnimationView = ({
               if (shape.graphics._strokeStyle) {
                 shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
               }
-
+              if (layer.shape.strokeStyle === 'dash') {
+                shape.graphics._strokeDash.segments = [layer.shape.strokeWidth * 2, layer.shape.strokeWidth];
+              } else if (layer.shape.strokeStyle === 'dot') {
+                shape.graphics._strokeDash.segments = [layer.shape.strokeWidth, layer.shape.strokeWidth];
+              } else {
+                shape.graphics._strokeDash.segments = [0, 0];
+              }
               shape.graphics.command.w = layer.shape.w;
               shape.graphics.command.h = layer.shape.h;
               shape.rotation = layer.shape.angle;
@@ -226,7 +289,7 @@ const AnimationView = ({
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
-                .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .setStrokeDash([0, 0], 0).setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
                 .drawCircle(layer.shape.x, layer.shape.y, layer.shape.radius);
               stage.addChild(shape);
             } else {
@@ -238,7 +301,13 @@ const AnimationView = ({
               if (shape.graphics._strokeStyle) {
                 shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
               }
-
+              if (layer.shape.strokeStyle === 'dash') {
+                shape.graphics._strokeDash.segments = [layer.shape.strokeWidth * 2, layer.shape.strokeWidth];
+              } else if (layer.shape.strokeStyle === 'dot') {
+                shape.graphics._strokeDash.segments = [layer.shape.strokeWidth, layer.shape.strokeWidth];
+              } else {
+                shape.graphics._strokeDash.segments = [0, 0];
+              }
               shape.graphics.command.radius = layer.shape.radius;
               shape.rotation = layer.shape.angle;
             }
@@ -249,7 +318,7 @@ const AnimationView = ({
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
-                .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .setStrokeDash([0, 0], 0).setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
                 .drawEllipse(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
               stage.addChild(shape);
             } else {
@@ -261,7 +330,13 @@ const AnimationView = ({
               if (shape.graphics._strokeStyle) {
                 shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
               }
-
+              if (layer.shape.strokeStyle === 'dash') {
+                shape.graphics._strokeDash.segments = [layer.shape.strokeWidth * 2, layer.shape.strokeWidth];
+              } else if (layer.shape.strokeStyle === 'dot') {
+                shape.graphics._strokeDash.segments = [layer.shape.strokeWidth, layer.shape.strokeWidth];
+              } else {
+                shape.graphics._strokeDash.segments = [0, 0];
+              }
               shape.graphics.command.w = layer.shape.w;
               shape.graphics.command.h = layer.shape.h;
               shape.rotation = layer.shape.angle;
@@ -273,7 +348,7 @@ const AnimationView = ({
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
-                .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .setStrokeDash([0, 0], 0).setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
                 .drawPolyStar(layer.shape.x, layer.shape.y,
                   layer.shape.radius, 5, layer.shape.pointSize, layer.shape.angle);
               stage.addChild(shape);
@@ -286,7 +361,13 @@ const AnimationView = ({
               if (shape.graphics._strokeStyle) {
                 shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
               }
-
+              if (layer.shape.strokeStyle === 'dash') {
+                shape.graphics._strokeDash.segments = [layer.shape.strokeWidth * 2, layer.shape.strokeWidth];
+              } else if (layer.shape.strokeStyle === 'dot') {
+                shape.graphics._strokeDash.segments = [layer.shape.strokeWidth, layer.shape.strokeWidth];
+              } else {
+                shape.graphics._strokeDash.segments = [0, 0];
+              }
               shape.graphics.command.radius = layer.shape.radius;
               shape.graphics.command.pointSize = layer.shape.pointSize;
               shape.graphics.command.angle = layer.shape.angle;
@@ -312,14 +393,21 @@ const AnimationView = ({
         }
       }
     }
-    // drawSelectors();
+
+    if (curTemplate) {
+      const exportRoot = stage.getChildByName(curTemplate.id);
+      if (exportRoot && !paused) exportRoot.gotoAndPlay(curTime / 24);
+      if (exportRoot && paused) exportRoot.gotoAndStop(curTime / 24);
+    }
+
+    removeSelectors();
+    drawSelectors();
   };
 
   const addTweens = () => {
     for (let i = 0; i < layers.length; i++) {
       const layer = layers[i];
       const shape = stage.getChildByName(layer.title);
-      // window.createjs.Tween.removeTweens(shape);
       if (shape && layer.shape.type !== 'template') {
         const tween = new window.createjs.Tween.get(shape, { override: true });
         for (let j = 0; j < layer.keyframes.length; j++) {
@@ -331,6 +419,7 @@ const AnimationView = ({
             tween.to(keyFrame.data, keyFrame.val - lastTimeVal, window.createjs.Ease[keyFrame.data.anim]);
           }
         }
+        tween.wait(maxTime - layer.keyframes[layer.keyframes.length - 1].val);
         tween.bounce = true;
         timeline.addTween(tween);
       }
@@ -349,8 +438,9 @@ const AnimationView = ({
           y: e.clientY,
           w: 100,
           h: 100,
-          fillColor: '#f00',
-          strokeColor: '#fff',
+          fillColor: '#fff',
+          strokeStyle: 'solid',
+          strokeColor: '#000',
           strokeWidth: 1,
         };
         break;
@@ -359,10 +449,11 @@ const AnimationView = ({
           type: 'ellipse',
           x: e.clientX,
           y: e.clientY,
-          w: 100,
+          w: 200,
           h: 100,
-          fillColor: '#f00',
-          strokeColor: '#fff',
+          fillColor: '#fff',
+          strokeStyle: 'solid',
+          strokeColor: '#000',
           strokeWidth: 1,
         };
         break;
@@ -372,8 +463,9 @@ const AnimationView = ({
           x: e.clientX,
           y: e.clientY,
           radius: 50,
-          fillColor: '#f00',
-          strokeColor: '#fff',
+          fillColor: '#fff',
+          strokeStyle: 'solid',
+          strokeColor: '#000',
           strokeWidth: 1,
         };
         break;
@@ -383,8 +475,9 @@ const AnimationView = ({
           x: e.clientX,
           y: e.clientY,
           radius: 50,
-          fillColor: '#f00',
-          strokeColor: '#fff',
+          fillColor: '#fff',
+          strokeStyle: 'solid',
+          strokeColor: '#000',
           strokeWidth: 1,
           angle: -90,
           pointSize: 0.6,
@@ -396,9 +489,9 @@ const AnimationView = ({
           x: e.clientX,
           y: e.clientY,
           text: 'New Text',
-          fontSize: 25,
+          fontSize: 45,
           fontFamily: 'Arial',
-          color: '#f00',
+          color: '#000',
         };
         break;
       default:
@@ -467,12 +560,11 @@ const AnimationView = ({
         color: backgroundColor,
       },
     });
-    addNewLayer({ title: curTemplate.id, shape: { type: 'template', name: curTemplate.id } });
+    addNewLayer({ title: curTemplate.id, visible: true, shape: { type: 'template', name: curTemplate.id } });
     newExportRoot.name = curTemplate.id;
     if (paused) newExportRoot.gotoAndStop(0);
 
     stage.addChild(newExportRoot);
-    setExportRoot(newExportRoot);
   }, [curTemplate]);
 
   useEffect(() => {
@@ -497,17 +589,20 @@ const AnimationView = ({
   }, [templateProperty]);
 
   useEffect(() => {
-    window.createjs.Ticker.removeEventListener('tick', handleTickListener);
-    if (!paused) {
-      setCurTime(0);
-      handleTickListener = window.createjs.Ticker.addEventListener('tick', handleTick);
+    if (window.createjs.Ticker.hasEventListener('tick')) {
+      window.createjs.Ticker.removeEventListener('tick', handleTickListener);
     }
+    setCurTime(0);
+    handleTickListener = window.createjs.Ticker.addEventListener('tick', handleTick(maxTime));
   }, [maxTime]);
 
   useEffect(() => {
     if (!stage) return;
     if (!paused) {
-      handleTickListener = window.createjs.Ticker.addEventListener('tick', handleTick);
+      if (window.createjs.Ticker.hasEventListener('tick')) {
+        window.createjs.Ticker.removeEventListener('tick', handleTickListener);
+      }
+      handleTickListener = window.createjs.Ticker.addEventListener('tick', handleTick(maxTime));
     } else {
       // window.createjs.Ticker.removeEventListener('tick', handleTickListener);
     }
@@ -520,6 +615,7 @@ const AnimationView = ({
     }
     if (!paused) timeline.gotoAndPlay(curTime);
     else timeline.gotoAndStop(curTime);
+    removeSelectors();
     stage.update();
   }, [paused]);
 
@@ -546,6 +642,10 @@ const AnimationView = ({
     } else {
       timeline.gotoAndPlay(curTime);
     }
+    if (curTime === 0) {
+      drawLayers();
+      addTweens();
+    }
     stage.update();
   }, [curTime]);
 
@@ -557,6 +657,7 @@ const AnimationView = ({
     setTimeline(newTimeline);
 
     window.createjs.Ticker.timingMode = window.createjs.Ticker.RAF;
+
     const canvas = document.getElementById('canvas');
     const animContainer = document.getElementById('animation_container');
     const domOverlayContainer = document.getElementById('dom_overlay_container');
@@ -566,19 +667,18 @@ const AnimationView = ({
 
   useEffect(() => {
     if (!stage) return;
-    if (paused) {
+    if (curTime === 0) {
       drawLayers();
       addTweens();
     } else {
       setCurTime(0);
-      setPaused(true);
-      drawLayers();
-      addTweens();
     }
+    setPaused(true);
   }, [layers]);
 
   useEffect(() => {
-    // drawSelectors();
+    removeSelectors();
+    drawSelectors();
   }, [curLayer]);
 
   return (
@@ -614,7 +714,6 @@ AnimationView.propTypes = {
   curLayer: PropTypes.number.isRequired,
   addNewLayer: PropTypes.func.isRequired,
   setLayerData: PropTypes.func.isRequired,
-  setExportRoot: PropTypes.func.isRequired,
   exportMode: PropTypes.bool.isRequired,
 };
 
@@ -640,7 +739,6 @@ const mapDispatchToProps = (dispatch) => bindActionCreators(
     addNewLayer: LayerAction.addNewLayer,
     setCurLayer: LayerAction.setCurLayer,
     setLayerData: LayerAction.setLayerData,
-    setExportRoot: StageAction.setExportRoot,
   },
   dispatch,
 );

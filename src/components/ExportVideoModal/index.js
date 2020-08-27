@@ -4,9 +4,12 @@ import './style.scss';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import CCapture from 'ccapture.js';
-import { CircularProgress } from '@material-ui/core';
+import Progress from 'react-progressbar';
+
 import Modal from '../common/Modal';
 import * as TemplateAction from '../../store/actions/template.action';
+import { CircularProgress } from '@material-ui/core';
+
 const templateRequire = require.context('../../templates/', true);
 
 let handleTickExport;
@@ -17,7 +20,8 @@ class ExportVideoModal extends React.Component {
 
     this.state = {
       url: '',
-      isRendering: false,
+      progress: 0,
+      frameNum: 0,
     };
   }
 
@@ -25,7 +29,6 @@ class ExportVideoModal extends React.Component {
     this.canvas = document.getElementById('canvas_export');
     this.exportStage = new window.createjs.Stage('canvas_export');
     this.timeline = new window.createjs.Timeline();
-    this.frameNum = 0;
     this.drawLayers();
     this.addTweens();
     this.updateExportStage();
@@ -53,7 +56,9 @@ class ExportVideoModal extends React.Component {
     this.exportStage.update();
   };
 
-  onProgress = () => {};
+  onProgress = (progress) => {
+    this.setState({ progress });
+  };
 
   handleTick = () => {
     const { maxTime } = this.props;
@@ -63,15 +68,15 @@ class ExportVideoModal extends React.Component {
       window.createjs.Ticker.removeEventListener('tick', handleTickExport);
       this.capturer.stop();
       this.capturer.save(this.showVideoLink);
-      cancelAnimationFrame(this.animationFrameHandler);
     }
     this.exportStage.update();
   };
 
   showVideoLink = (url) => {
+    cancelAnimationFrame(this.animationFrameHandler);
     const a = document.createElement('a');
     a.href = `${process.env.REACT_APP_VIDEO_API}${url}`;
-    this.setState({ url: `${process.env.REACT_APP_VIDEO_API}${url}`, isRendering: false });
+    this.setState({ url: `${process.env.REACT_APP_VIDEO_API}${url}` });
   };
 
   drawLayers = () => {
@@ -84,199 +89,116 @@ class ExportVideoModal extends React.Component {
         this.exportStage.update();
       }
     }
+
     for (let i = 0; i < layers.length; i++) {
       const layer = layers[i];
       if (layer.shape && layer.shape.type) {
-        const shape = this.exportStage.getChildByName(layer.title);
-        if (!shape && layer.shape.type !== 'template') {
-          const newShape = new window.createjs.Shape();
-          newShape.visible = layer.visible;
-          newShape.name = layer.title;
-          if (layer.shape.type === 'circle') {
-            newShape.graphics.beginFill(layer.shape.fillColor)
-              .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-              .drawCircle(layer.shape.x, layer.shape.y, layer.shape.radius);
-          } else if (layer.shape.type === 'rect') {
-            newShape.graphics.beginFill(layer.shape.fillColor)
-              .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-              .drawRect(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
-          } else if (layer.shape.type === 'ellipse') {
-            newShape.graphics.beginFill(layer.shape.fillColor)
-              .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-              .drawEllipse(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
-          }
-          this.exportStage.addChild(newShape);
-        } else if (layer.shape.type !== 'template') {
-          shape.visible = layer.visible;
-          shape.graphics.command.x = layer.shape.x;
-          shape.graphics.command.y = layer.shape.y;
-          shape.graphics._fill.style = layer.shape.fillColor;
-          shape.rotation = layer.shape.rotation;
-          shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
-          shape.graphics._stroke.style = layer.shape.strokeColor;
-          switch (layer.shape.type) {
-            case 'circle':
-              shape.graphics.command.radius = layer.shape.radius;
-              break;
-            case 'rect':
-              shape.graphics.command.w = layer.shape.w;
-              shape.graphics.command.h = layer.shape.h;
-              break;
-            default:
-              break;
-          }
-        } else {
-          const AdobeAn = {};
-          const templateScript = (templateRequire(`./${this.props.curTemplate.scriptName}`)).default;
-          templateScript(window.createjs, AdobeAn);
+        let shape = this.exportStage.getChildByName(layer.title);
+        switch (layer.shape.type) {
+          case 'text':
+            if (!shape) {
+              shape = new window.createjs.Text(layer.shape.text,
+                `${layer.shape.fontSize}px ${layer.shape.fontFamily}`, layer.shape.color);
+              shape.x = layer.shape.x;
+              shape.y = layer.shape.y;
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              this.exportStage.addChild(shape);
+            }
+            break;
+          case 'rect':
+            if (!shape) {
+              shape = new window.createjs.Shape();
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              shape.graphics.beginFill(layer.shape.fillColor);
+              if (layer.shape.strokeStyle === 'dash') {
+                shape.graphics.setStrokeDash([layer.shape.strokeWidth * 2, layer.shape.strokeWidth], 0);
+              } else if (layer.shape.strokeStyle === 'dot') {
+                shape.graphics.setStrokeDash([layer.shape.strokeWidth, layer.shape.strokeWidth], 0);
+              } else {
+                shape.graphics.setStrokeDash([0, 0], 0);
+              }
+              shape.graphics.setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .drawRect(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
 
-          const key = Object.keys(AdobeAn.compositions)[0];
-          const comp = AdobeAn.getComposition(key);
-          const lib = comp.getLibrary();
-          const newExportRoot = new lib[this.props.curTemplate.entryPoint]();
-          newExportRoot.name = this.props.curTemplate.id;
-          this.exportStage.addChild(newExportRoot);
+              this.exportStage.addChild(shape);
+            }
+            break;
+          case 'circle':
+            if (!shape) {
+              shape = new window.createjs.Shape();
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              shape.graphics.beginFill(layer.shape.fillColor);
+              if (layer.shape.strokeStyle === 'dash') {
+                shape.graphics.setStrokeDash([layer.shape.strokeWidth * 2, layer.shape.strokeWidth], 0);
+              } else if (layer.shape.strokeStyle === 'dot') {
+                shape.graphics.setStrokeDash([layer.shape.strokeWidth, layer.shape.strokeWidth], 0);
+              } else {
+                shape.graphics.setStrokeDash([0, 0], 0);
+              }
+
+              shape.graphics.setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .drawCircle(layer.shape.x, layer.shape.y, layer.shape.radius);
+              this.exportStage.addChild(shape);
+            }
+            break;
+          case 'ellipse':
+            if (!shape) {
+              shape = new window.createjs.Shape();
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              shape.graphics.beginFill(layer.shape.fillColor);
+              if (layer.shape.strokeStyle === 'dash') {
+                shape.graphics.setStrokeDash([layer.shape.strokeWidth * 2, layer.shape.strokeWidth], 0);
+              } else if (layer.shape.strokeStyle === 'dot') {
+                shape.graphics.setStrokeDash([layer.shape.strokeWidth, layer.shape.strokeWidth], 0);
+              } else {
+                shape.graphics.setStrokeDash([0, 0], 0);
+              }
+              shape.graphics.setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .drawEllipse(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
+              this.exportStage.addChild(shape);
+            }
+            break;
+          case 'star':
+            if (!shape) {
+              shape = new window.createjs.Shape();
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              shape.graphics.beginFill(layer.shape.fillColor);
+              if (layer.shape.strokeStyle === 'dash') {
+                shape.graphics.setStrokeDash([layer.shape.strokeWidth * 2, layer.shape.strokeWidth], 0);
+              } else if (layer.shape.strokeStyle === 'dot') {
+                shape.graphics.setStrokeDash([layer.shape.strokeWidth, layer.shape.strokeWidth], 0);
+              } else {
+                shape.graphics.setStrokeDash([0, 0], 0);
+              }
+              shape.graphics.setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .drawPolyStar(layer.shape.x, layer.shape.y,
+                  layer.shape.radius, 5, layer.shape.pointSize, layer.shape.angle);
+              this.exportStage.addChild(shape);
+            }
+            break;
+          case 'template':
+            const AdobeAn = {};
+            const templateScript = (templateRequire(`./${this.props.curTemplate.scriptName}`)).default;
+            templateScript(window.createjs, AdobeAn);
+
+            const key = Object.keys(AdobeAn.compositions)[0];
+            const comp = AdobeAn.getComposition(key);
+            const lib = comp.getLibrary();
+            const newExportRoot = new lib[this.props.curTemplate.entryPoint]();
+            newExportRoot.name = this.props.curTemplate.id;
+            this.exportStage.addChild(newExportRoot);
+            break;
+          default:
+            break;
         }
         this.exportStage.update();
       }
     }
-
-    // for (let i = 0; i < layers.length; i++) {
-    //   const layer = layers[i];
-    //   if (layer.shape && layer.shape.type) {
-    //     let shape = this.exportStage.getChildByName(layer.title);
-    //     switch (layer.shape.type) {
-    //       case 'text':
-    //         if (!shape) {
-    //           shape = new window.createjs.Text(layer.shape.text,
-    //             `${layer.shape.fontSize}px ${layer.shape.fontFamily}`, layer.shape.color);
-    //           shape.x = layer.shape.x;
-    //           shape.y = layer.shape.y;
-    //           shape.name = layer.title;
-    //           shape.visible = layer.visible;
-    //           this.exportStage.addChild(shape);
-    //         } else {
-    //           shape.x = layer.shape.x;
-    //           shape.y = layer.shape.y;
-    //           shape.text = layer.shape.text;
-    //           shape.font = `${layer.shape.fontSize}px ${layer.shape.fontFamily}`;
-    //           shape.color = layer.shape.color;
-    //         }
-    //         break;
-    //       case 'rect':
-    //         if (!shape) {
-    //           shape = new window.createjs.Shape();
-    //           shape.name = layer.title;
-    //           shape.visible = layer.visible;
-    //           shape.graphics.beginFill(layer.shape.fillColor)
-    //             .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-    //             .drawRect(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
-    //           this.exportStage.addChild(shape);
-    //         } else {
-    //           shape.visible = layer.visible;
-    //           shape.graphics.command.x = layer.shape.x;
-    //           shape.graphics.command.y = layer.shape.y;
-    //           shape.graphics._fill.style = layer.shape.fillColor;
-    //           shape.graphics._stroke.style = layer.shape.strokeColor;
-    //           if (shape.graphics._strokeStyle) {
-    //             shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
-    //           }
-    //
-    //           shape.graphics.command.w = layer.shape.w;
-    //           shape.graphics.command.h = layer.shape.h;
-    //           shape.rotation = layer.shape.angle;
-    //         }
-    //         break;
-    //       case 'circle':
-    //         if (!shape) {
-    //           shape = new window.createjs.Shape();
-    //           shape.name = layer.title;
-    //           shape.visible = layer.visible;
-    //           shape.graphics.beginFill(layer.shape.fillColor)
-    //             .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-    //             .drawCircle(layer.shape.x, layer.shape.y, layer.shape.radius);
-    //           this.exportStage.addChild(shape);
-    //         } else {
-    //           shape.visible = layer.visible;
-    //           shape.graphics.command.x = layer.shape.x;
-    //           shape.graphics.command.y = layer.shape.y;
-    //           shape.graphics._fill.style = layer.shape.fillColor;
-    //           shape.graphics._stroke.style = layer.shape.strokeColor;
-    //           if (shape.graphics._strokeStyle) {
-    //             shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
-    //           }
-    //
-    //           shape.graphics.command.radius = layer.shape.radius;
-    //           shape.rotation = layer.shape.angle;
-    //         }
-    //         break;
-    //       case 'ellipse':
-    //         if (!shape) {
-    //           shape = new window.createjs.Shape();
-    //           shape.name = layer.title;
-    //           shape.visible = layer.visible;
-    //           shape.graphics.beginFill(layer.shape.fillColor)
-    //             .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-    //             .drawEllipse(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
-    //           this.exportStage.addChild(shape);
-    //         } else {
-    //           shape.visible = layer.visible;
-    //           shape.graphics.command.x = layer.shape.x;
-    //           shape.graphics.command.y = layer.shape.y;
-    //           shape.graphics._fill.style = layer.shape.fillColor;
-    //           shape.graphics._stroke.style = layer.shape.strokeColor;
-    //           if (shape.graphics._strokeStyle) {
-    //             shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
-    //           }
-    //
-    //           shape.graphics.command.w = layer.shape.w;
-    //           shape.graphics.command.h = layer.shape.h;
-    //           shape.rotation = layer.shape.angle;
-    //         }
-    //         break;
-    //       case 'star':
-    //         if (!shape) {
-    //           shape = new window.createjs.Shape();
-    //           shape.name = layer.title;
-    //           shape.visible = layer.visible;
-    //           shape.graphics.beginFill(layer.shape.fillColor)
-    //             .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-    //             .drawPolyStar(layer.shape.x, layer.shape.y,
-    //               layer.shape.radius, 5, layer.shape.pointSize, layer.shape.angle);
-    //           this.exportStage.addChild(shape);
-    //         } else {
-    //           shape.visible = layer.visible;
-    //           shape.graphics.command.x = layer.shape.x;
-    //           shape.graphics.command.y = layer.shape.y;
-    //           shape.graphics._fill.style = layer.shape.fillColor;
-    //           shape.graphics._stroke.style = layer.shape.strokeColor;
-    //           if (shape.graphics._strokeStyle) {
-    //             shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
-    //           }
-    //
-    //           shape.graphics.command.radius = layer.shape.radius;
-    //           shape.graphics.command.pointSize = layer.shape.pointSize;
-    //           shape.graphics.command.angle = layer.shape.angle;
-    //         }
-    //         break;
-    //       case 'template':
-    //         const AdobeAn = {};
-    //         const templateScript = (templateRequire(`./${this.props.curTemplate.scriptName}`)).default;
-    //         templateScript(window.createjs, AdobeAn);
-    //
-    //         const key = Object.keys(AdobeAn.compositions)[0];
-    //         const comp = AdobeAn.getComposition(key);
-    //         const lib = comp.getLibrary();
-    //         const newExportRoot = new lib[this.props.curTemplate.entryPoint]();
-    //         newExportRoot.name = this.props.curTemplate.id;
-    //         this.exportStage.addChild(newExportRoot);
-    //         break;
-    //       default:
-    //         break;
-    //     }
-    //     this.exportStage.update();
-    //   }
-    // }
 
     const childrens = this.exportStage.children;
     for (let i = childrens.length - 1; i >= 0; i--) {
@@ -323,6 +245,8 @@ class ExportVideoModal extends React.Component {
 
   renderVideo = () => {
     if (!this.capturer) return;
+    const { frameNum } = this.state;
+    this.setState({ frameNum: frameNum + 1 });
     this.capturer.capture(this.canvas);
   };
 
@@ -342,23 +266,24 @@ class ExportVideoModal extends React.Component {
 
     this.capturer.start();
     this.animate();
-    this.setState({ isRendering: true });
+    this.setState({ frameNum: 0, progress: 0 });
   };
 
   onExportClose = () => {
     window.createjs.Ticker.removeEventListener('tick', handleTickExport);
-    // this.capturer = null;
     this.props.onClose();
     this.props.setExportMode(false);
   };
 
   onDownload = () => {
     this.setState({ url: '' });
+    this.props.onClose();
+    this.props.setExportMode(false);
   };
 
   render() {
-    const { show, onClose } = this.props;
-    const { isRendering, url } = this.state;
+    const { show, onClose, maxTime } = this.props;
+    const { url, progress, frameNum } = this.state;
     return (
       <>
         <Modal
@@ -369,17 +294,29 @@ class ExportVideoModal extends React.Component {
         >
           <div className="modal-body">
             <canvas id="canvas_export" width={1280} height={720} style={{ display: 'none' }} />
-          </div>
-          <div>
-            {
-              isRendering && <CircularProgress />
-            }
+            <div>
+              <Progress
+                completed={
+                  Math.floor((frameNum * 10000) / (6 * maxTime) > 100 ? 100 : (frameNum * 10000) / (6 * maxTime))
+                }
+              />
+              <Progress completed={Math.floor(progress * 100)} />
+            </div>
           </div>
           <div className="modal-footer">
             {
               url && <a href={url} className="btn btn-success" onClick={this.onDownload} target="#">Download</a>
             }
-            <button className="btn btn-primary" onClick={this.startExport}>Export</button>
+            {
+              !url
+              && (
+                <button className="btn btn-primary btn-export" onClick={this.startExport}>
+                  {
+                    frameNum === 0 ? 'Export' : <CircularProgress size={18} color="inherit" />
+                  }
+                </button>
+              )
+            }
             <button className="btn btn-danger" data-dismiss="modal" onClick={this.onExportClose}>Cancel</button>
           </div>
         </Modal>
@@ -398,10 +335,9 @@ ExportVideoModal.propTypes = {
   setExportMode: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = ({ layer, stage, template }) => ({
+const mapStateToProps = ({ layer, template }) => ({
   layers: layer.layers,
   maxTime: layer.maxTime,
-  exportRoot: stage.exportRoot,
   curTemplate: template.curTemplate,
   templateProperty: template.property,
 });

@@ -13,14 +13,14 @@ const RightSceneView = ({ paused, setPaused, setCurTime, curTime, maxTime }) => 
     setPaused(!paused);
   };
   const timeBackward = () => {
-    if (curTime > 200) {
-      setCurTime(curTime - 200);
+    if (curTime >= 100) {
+      setCurTime(curTime - 100);
     }
   };
 
   const timeForward = () => {
-    if (curTime + 200 < maxTime) {
-      setCurTime(curTime + 200);
+    if (curTime + 100 <= maxTime) {
+      setCurTime(curTime + 100);
     }
   };
 

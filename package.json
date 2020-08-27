@@ -33,7 +33,9 @@
     "mdi-react": "^7.3.0",
     "react-color": "^2.18.1",
     "ccapture.js": "https://github.com/aceslowman/ccapture.js.git#npm-fix",
-    "react-transition-group": "latest"
+    "react-transition-group": "latest",
+    "react-progressbar": "^15.4.1",
+    "createjs": "^1.0.1"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.5.0",
