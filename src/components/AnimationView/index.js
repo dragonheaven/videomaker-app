@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
+import createjs from 'createjs';
 
 import * as TemplateAction from '../../store/actions/template.action';
 import * as TimeAction from '../../store/actions/time.action';
@@ -106,7 +107,7 @@ const AnimationView = ({
 
   useEffect(() => {
     if (exportMode) {
-      window.createjs.Ticker.removeEventListener('tick', handleTickListener);
+      createjs.Ticker.removeEventListener('tick', handleTickListener);
     }
   }, [exportMode]);
 
@@ -183,7 +184,7 @@ const AnimationView = ({
           cornSize = 0;
           break;
       }
-      const dashRect = new window.createjs.Shape();
+      const dashRect = new createjs.Shape();
       dashRect.name = '__select_dash';
       dashRect.graphics
         .setStrokeStyle(2)
@@ -193,7 +194,7 @@ const AnimationView = ({
       stage.addChild(dashRect);
       stage.update();
       for (let i = 0; i < 8; i++) {
-        const newShape = new window.createjs.Shape();
+        const newShape = new createjs.Shape();
         newShape.name = `__select_${i}`;
         const [x, y] = getPos(selectRect.x, selectRect.y, selectRect.w, selectRect.h, cornSize / 2, i);
         newShape.graphics.beginFill('#fff')
@@ -237,7 +238,7 @@ const AnimationView = ({
         switch (layer.shape.type) {
           case 'text':
             if (!shape) {
-              shape = new window.createjs.Text(layer.shape.text,
+              shape = new createjs.Text(layer.shape.text,
                 `${layer.shape.fontSize}px ${layer.shape.fontFamily}`, layer.shape.color);
               shape.x = layer.shape.x;
               shape.y = layer.shape.y;
@@ -255,7 +256,7 @@ const AnimationView = ({
             break;
           case 'rect':
             if (!shape) {
-              shape = new window.createjs.Shape();
+              shape = new createjs.Shape();
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
@@ -285,7 +286,7 @@ const AnimationView = ({
             break;
           case 'circle':
             if (!shape) {
-              shape = new window.createjs.Shape();
+              shape = new createjs.Shape();
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
@@ -314,7 +315,7 @@ const AnimationView = ({
             break;
           case 'ellipse':
             if (!shape) {
-              shape = new window.createjs.Shape();
+              shape = new createjs.Shape();
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
@@ -344,7 +345,7 @@ const AnimationView = ({
             break;
           case 'star':
             if (!shape) {
-              shape = new window.createjs.Shape();
+              shape = new createjs.Shape();
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
@@ -409,14 +410,14 @@ const AnimationView = ({
       const layer = layers[i];
       const shape = stage.getChildByName(layer.title);
       if (shape && layer.shape.type !== 'template') {
-        const tween = new window.createjs.Tween.get(shape, { override: true });
+        const tween = new createjs.Tween.get(shape, { override: true });
         for (let j = 0; j < layer.keyframes.length; j++) {
           const keyFrame = layer.keyframes[j];
           const lastTimeVal = j ? layer.keyframes[j - 1].val : 0;
           if (keyFrame.type === 'wait') {
             tween.wait(keyFrame.val - lastTimeVal);
           } else if (keyFrame.type === 'to') {
-            tween.to(keyFrame.data, keyFrame.val - lastTimeVal, window.createjs.Ease[keyFrame.data.anim]);
+            tween.to(keyFrame.data, keyFrame.val - lastTimeVal, createjs.Ease[keyFrame.data.anim]);
           }
         }
         tween.wait(maxTime - layer.keyframes[layer.keyframes.length - 1].val);
@@ -515,7 +516,7 @@ const AnimationView = ({
     if (!canvas || !animContainer || !domOverlayContainer || !curTemplate.id) return;
 
     const templateScript = (templateRequire(`./${curTemplate.scriptName}`)).default;
-    templateScript(window.createjs, AdobeAn);
+    templateScript(createjs, AdobeAn);
 
     const key = Object.keys(AdobeAn.compositions)[0];
     const comp = AdobeAn.getComposition(key);
@@ -589,25 +590,25 @@ const AnimationView = ({
   }, [templateProperty]);
 
   useEffect(() => {
-    if (window.createjs.Ticker.hasEventListener('tick')) {
-      window.createjs.Ticker.removeEventListener('tick', handleTickListener);
+    if (createjs.Ticker.hasEventListener('tick')) {
+      createjs.Ticker.removeEventListener('tick', handleTickListener);
     }
     setCurTime(0);
-    handleTickListener = window.createjs.Ticker.addEventListener('tick', handleTick(maxTime));
+    handleTickListener = createjs.Ticker.addEventListener('tick', handleTick(maxTime));
   }, [maxTime]);
 
   useEffect(() => {
     if (!stage) return;
     if (!paused) {
-      if (window.createjs.Ticker.hasEventListener('tick')) {
-        window.createjs.Ticker.removeEventListener('tick', handleTickListener);
+      if (createjs.Ticker.hasEventListener('tick')) {
+        createjs.Ticker.removeEventListener('tick', handleTickListener);
       }
-      handleTickListener = window.createjs.Ticker.addEventListener('tick', handleTick(maxTime));
+      handleTickListener = createjs.Ticker.addEventListener('tick', handleTick(maxTime));
     } else {
-      // window.createjs.Ticker.removeEventListener('tick', handleTickListener);
+      // createjs.Ticker.removeEventListener('tick', handleTickListener);
     }
 
-    window.createjs.Ticker.paused = !!paused;
+    createjs.Ticker.paused = !!paused;
     if (curTemplate) {
       const exportRoot = stage.getChildByName(curTemplate.id);
       if (exportRoot && !paused) exportRoot.gotoAndPlay(curTime / 24);
@@ -623,9 +624,9 @@ const AnimationView = ({
     if (!stage) return;
     drawLayers();
     addTweens();
-    window.createjs.Ticker.framerate = 24;
-    window.createjs.Ticker.setFPS(24);
-    window.createjs.Ticker.paused = true;
+    createjs.Ticker.framerate = 24;
+    createjs.Ticker.setFPS(24);
+    createjs.Ticker.paused = true;
   }, [stage]);
 
   useEffect(() => {
@@ -650,13 +651,13 @@ const AnimationView = ({
   }, [curTime]);
 
   useEffect(() => {
-    const newStage = new window.createjs.Stage('canvas');
+    const newStage = new createjs.Stage('canvas');
     setStage(newStage);
 
-    const newTimeline = new window.createjs.Timeline();
+    const newTimeline = new createjs.Timeline();
     setTimeline(newTimeline);
 
-    window.createjs.Ticker.timingMode = window.createjs.Ticker.RAF;
+    createjs.Ticker.timingMode = createjs.Ticker.RAF;
 
     const canvas = document.getElementById('canvas');
     const animContainer = document.getElementById('animation_container');

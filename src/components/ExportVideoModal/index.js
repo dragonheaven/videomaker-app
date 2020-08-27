@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import './style.scss';
+import { CircularProgress } from '@material-ui/core';
+
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import CCapture from 'ccapture.js';
@@ -8,7 +9,7 @@ import Progress from 'react-progressbar';
 
 import Modal from '../common/Modal';
 import * as TemplateAction from '../../store/actions/template.action';
-import { CircularProgress } from '@material-ui/core';
+import './style.scss';
 
 const templateRequire = require.context('../../templates/', true);
 
@@ -220,9 +221,11 @@ class ExportVideoModal extends React.Component {
     for (let i = 0; i < layers.length; i++) {
       const layer = layers[i];
       const shape = this.exportStage.getChildByName(layer.title);
+
       if (shape && layer.shape.type !== 'template') {
         window.createjs.Tween.removeTweens(shape);
         const tween = new window.createjs.Tween.get(shape);
+
         for (let j = 0; j < layer.keyframes.length; j++) {
           const keyFrame = layer.keyframes[j];
           const lastTimeVal = j ? layer.keyframes[j - 1].val : 0;
