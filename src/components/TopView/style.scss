@@ -4,11 +4,15 @@
     background: #2A2A2A;
     color: white;
 
-    svg {
+    .drag-icon {
         margin-left: 50px;
     }
-
-    span {
-        font-size: 25px;
+    .btn-publish {
+        padding: 0.1rem 0.5rem;
+        font-size: 0.9rem;
+        &:hover {
+            color: black !important;
+            background-color: #f0f0f0;
+        }
     }
 }

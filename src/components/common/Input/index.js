@@ -31,7 +31,7 @@ const Input = ({
 
 Input.propTypes = {
   name: PropTypes.string.isRequired,
-  value: PropTypes.string,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   className: PropTypes.string,
   remember: PropTypes.bool,
   onChange: PropTypes.func,

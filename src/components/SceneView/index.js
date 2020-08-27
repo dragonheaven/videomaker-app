@@ -19,9 +19,6 @@ const SceneView = ({ curProperty, setTemplateProperty }) => {
         <RightSceneView />
       </div>
       <TimeLineView />
-
-       {/*<LeftSceneView />*/}
-       {/*<RightSceneView />*/}
     </div>
   );
 };

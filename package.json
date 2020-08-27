@@ -29,7 +29,11 @@
     "react-scenejs-timeline": "^0.3.1",
     "styled-components": "latest",
     "scenejs": "^1.3.0",
-    "@material-ui/icons": "^4.9.1"
+    "@material-ui/icons": "^4.9.1",
+    "mdi-react": "^7.3.0",
+    "react-color": "^2.18.1",
+    "ccapture.js": "https://github.com/aceslowman/ccapture.js.git#npm-fix",
+    "react-transition-group": "latest"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.5.0",

@@ -7,10 +7,10 @@ export function addNewLayer(data) {
   };
 }
 
-export function setCurLayer(data) {
+export function setCurLayer(curLayer) {
   return {
     type: ACTION.SET_CUR_LAYER,
-    data,
+    curLayer,
   };
 }
 
@@ -32,6 +32,14 @@ export function changeLayerOrder(layerId, amount) {
 export function setKeyframes(layerId, data) {
   return {
     type: ACTION.SET_KEY_FRAMES,
+    layerId,
+    data,
+  };
+}
+
+export function setLayerData(layerId, data) {
+  return {
+    type: ACTION.SET_LAYER_DATA,
     layerId,
     data,
   };

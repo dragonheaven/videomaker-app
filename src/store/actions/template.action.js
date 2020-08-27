@@ -34,3 +34,10 @@ export function setTemplateBackground(data) {
     data,
   };
 }
+
+export function setExportMode(data) {
+  return {
+    type: ACTION.SET_EXPORT_MODE,
+    data,
+  };
+}

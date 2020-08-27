@@ -6,12 +6,11 @@ import PropTypes from 'prop-types';
 import * as TemplateAction from '../../store/actions/template.action';
 import './style.scss';
 import Select from '../common/Select';
-import TextControlView from '../TextControlView';
-import ShapeControlView from '../ShapeControlView';
-import * as Icon from 'react-feather';
+import TemplateTextControlView from '../TemplateTextControlView';
+import TemplateShapeControlView from '../TemplateShapeControlView';
 import BackgroundControlView from '../BackgroundControlView';
 
-const TemplateView = ({
+const TemplatePropertyView = ({
   templates,
   curTemplate,
   setCurTemplate,
@@ -44,9 +43,9 @@ const TemplateView = ({
         </div>
 
         <hr className="divider" />
-        <TextControlView />
+        <TemplateTextControlView />
         <hr className="divider" />
-        <ShapeControlView />
+        <TemplateShapeControlView />
         <hr className="divider" />
         <BackgroundControlView />
       </div>
@@ -54,7 +53,7 @@ const TemplateView = ({
   );
 };
 
-TemplateView.propTypes = {
+TemplatePropertyView.propTypes = {
   templates: PropTypes.arrayOf(PropTypes.object).isRequired,
   curTemplate: PropTypes.object.isRequired,
   setCurTemplate: PropTypes.func.isRequired,
@@ -74,4 +73,4 @@ const mapDispatchToProps = (dispatch) => bindActionCreators(
   dispatch,
 );
 
-export default connect(mapStateToProps, mapDispatchToProps)(TemplateView);
+export default connect(mapStateToProps, mapDispatchToProps)(TemplatePropertyView);

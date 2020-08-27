@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import * as TemplateAction from '../../store/actions/template.action';
-import Input from '../common/Input';
+import ColorPicker from '../common/ColorPicker';
 
 const BackgroundControlView = ({ background, setTemplateBackground }) => {
   const [isShapeOpen, setIsShapeOpen] = useState(true);
@@ -27,20 +27,9 @@ const BackgroundControlView = ({ background, setTemplateBackground }) => {
           <div className="form-group">
             <div className="col-md-12 mb-2 d-flex align-items-center">
               <label className="mr-2">Back Color:</label>
-              <Input
-                type="color"
-                name="back-color"
-                value={background.color}
-                onChange={(name, value) => mutateBackground({ color: value })}
-              />
-            </div>
-            <div className="col-md-12 mb-2 d-flex align-items-center">
-              <label className="mr-2">Back Image:</label>
-              <Input
-                type="file"
-                name="back-image"
-                value={background.image}
-                onChange={(e) => mutateBackground({ image: e.target.value })}
+              <ColorPicker
+                color={background.color}
+                setColor={(color) => mutateBackground({ color })}
               />
             </div>
             <div className="col-md-12 mb-2 d-flex align-items-center">
@@ -49,7 +38,7 @@ const BackgroundControlView = ({ background, setTemplateBackground }) => {
                 type="checkbox"
                 name="text"
                 placeholder="Text"
-                checked={background.show}
+                checked={background.show ? background.show : false}
                 onChange={(e) => mutateBackground({ show: e.target.checked })}
               />
             </div>

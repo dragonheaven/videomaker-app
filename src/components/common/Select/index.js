@@ -38,8 +38,8 @@ const Select = ({
 
   const filteredOptions = options.filter((option) => {
     if (searchable) {
-      return !search ||
-        (search && option.toLowerCase().indexOf(search.toLowerCase()) !== -1);
+      return !search
+        || (search && option.toLowerCase().indexOf(search.toLowerCase()) !== -1);
     }
     if (editable && !option.toLowerCase().startsWith(search)) {
       return false;
@@ -219,41 +219,44 @@ const Select = ({
           dropdownOpened
             ? (
               <div className="dropdown-list">
-                { searchable && <div className="fixed">
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={search}
-                    placeholder="Search..."
-                    onChange={(ev) => setSearch(ev.target.value)}
-                    spellCheck="false"
-                  />
-                </div>}
+                { searchable && (
+                  <div className="fixed">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={search}
+                      placeholder="Search..."
+                      onChange={(ev) => setSearch(ev.target.value)}
+                      spellCheck="false"
+                    />
+                  </div>
+                )}
                 <div className="scrollable">
-                {
-                  filteredOptions.map((option, index) => (
-                    <span
-                      key={option}
-                      className={`${currentIndex === index ? 'active' : ''}`}
-                      onClick={() => onItemSelect(option)}
-                    >
-                      {option}
-                    </span>
-                  ))
-                }
-              </div>
+                  {
+                    filteredOptions.map((option, index) => (
+                      <span
+                        key={option}
+                        className={`${currentIndex === index ? 'active' : ''}`}
+                        onClick={() => onItemSelect(option)}
+                      >
+                        {option}
+                      </span>
+                    ))
+                  }
+                </div>
                 { fixedOptions.length > 0 && <div className="separator" /> }
-                { fixedOptions.length > 0 && <div className="fixed">
-                  { fixedOptions.map((option, index) => (
+                { fixedOptions.length > 0 && (
+                  <div className="fixed">
+                    { fixedOptions.map((option, index) => (
                       <span
                         key={option}
                         onClick={() => onItemSelect(option, true)}
                       >
                         {option}
                       </span>
-                    ))
-                  }
-                </div> }
+                    ))}
+                  </div>
+                ) }
               </div>
             )
             : null
@@ -271,7 +274,7 @@ Select.propTypes = {
   label: PropTypes.string,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
   fixedOptions: PropTypes.arrayOf(PropTypes.string),
-  value: PropTypes.string,
+  value: PropTypes.any,
   values: PropTypes.arrayOf(PropTypes.string),
   placeholder: PropTypes.string,
   editable: PropTypes.bool,

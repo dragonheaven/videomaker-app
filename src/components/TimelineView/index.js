@@ -10,14 +10,12 @@ import { TextField } from '@material-ui/core';
 
 import * as LayerAction from '../../store/actions/layer.action';
 import * as TimeAction from '../../store/actions/time.action';
-import { Timeline } from '../../lib/animation-timeline';
+import { Timeline } from '../../lib/timeline/animation-timeline';
 
 const TimeLineView = (props) => {
   const [timeline, setTimeline] = useState();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  // const [preValue, setPreValue] = useState(null);
-  const preValue = null;
 
   const onScrollChange = (obj) => {
     if (!timeline) return;
@@ -38,28 +36,24 @@ const TimeLineView = (props) => {
     props.setCurTime(event.val);
   };
 
-  const onDragStarted = (obj) => {
-    // console.log(obj.val, obj, 'dragstarted');
-    // preValue = obj.target.val;
+  const onDragStarted = () => {
+    if (!props.paused) return;
   };
 
   const onDragFinished = (obj) => {
-    // console.log(obj.val, preValue);
-    // setPreValue(null);
-    console.log(obj.elements[0].row, preValue, 'dragfinished');
+    if (!props.paused) return;
     const layer = obj.elements[0].row;
+    window.createjs.Tween.removeAllTweens();
     props.setKeyframes(layer.id, layer.keyframes);
   };
 
-  const onDrag = (obj) => {
-    // console.log(obj.target.val, 'drag');
-    // setPreValue(obj.val);
+  const onDrag = () => {
   };
 
   useEffect(() => {
     if (!timeline) return;
     timeline.setTime(props.curTime);
-  }, [props.curTime, timeline]);
+  }, [props.curTime]);
 
   useEffect(() => {
     const newTimeline = new Timeline();
@@ -73,6 +67,7 @@ const TimeLineView = (props) => {
     timeline.initialize({
       id: 'timeline',
       headerHeight: 45,
+      width: 1200,
       headerFillColor: '#282828',
       fillColor: '#2A2A2A',
       timelineStyle: {
@@ -110,12 +105,12 @@ const TimeLineView = (props) => {
     headerElement.style.maxHeight = `${options.headerHeight}px`;
     headerElement.style.minHeight = `${options.headerHeight}px`;
     setIsLoaded(true);
-  }, [onDragFinished, onScrollChange, onTimeChanged, props, timeline]);
+  }, [timeline]);
 
   useEffect(() => {
     if (!timeline) return;
     timeline.setModel({ rows: props.layers });
-  }, [props.layers, timeline]);
+  }, [props.layers]);
 
   const addNewLayer = () => {
     props.addNewLayer({});
@@ -123,21 +118,26 @@ const TimeLineView = (props) => {
 
   const changeLayerOrder = (amount) => {
     const { curLayer, layers } = props;
-    if (!curLayer) return;
-    const indexOfCurLayer = layers.findIndex((item) => item.id === curLayer.id);
+    const indexOfCurLayer = layers.findIndex((item) => item.id === curLayer);
     if (indexOfCurLayer + amount < 0 || indexOfCurLayer + amount >= layers.length) return;
-    props.changeLayerOrder(curLayer.id, amount);
+    props.changeLayerOrder(curLayer, amount);
+  };
+
+  const setVisible = (layerId, visible) => {
+    props.setLayerData(layerId, { visible });
   };
 
   if (!timeline) return <></>;
   const options = timeline.getOptions();
 
   const {
-    layers, deleteLayer, setCurLayer, curLayer,
+    layers, deleteLayer, setCurLayer, curLayer, setLayerData,
   } = props;
 
+  const form = layers.find((item) => item.id === curLayer);
+
   return (
-    <div className="timeline-container flex-grow-1">
+    <div className="timeline-container ">
       <div className="outline">
         <div className="outline-header" id="outline-header">
           <div className="d-flex top-bar">
@@ -157,33 +157,38 @@ const TimeLineView = (props) => {
               isLoaded ? layers.map((item, index) => (
                 <div
                   key={index}
-                  className={`outline-node d-flex justify-content-between ${item.id === curLayer.id ? 'active' : ''}`}
+                  className={
+                    `outline-node d-flex justify-content-between ${form && item.id === curLayer ? 'active' : ''}`
+                  }
                   style={{
                     maxHeight: options.rowsStyle.height,
                     minHeight: options.rowsStyle.height,
                     marginBottom: options.rowsStyle.marginBottom,
                   }}
-                  onClick={() => setCurLayer(item)}
+                  onClick={() => setCurLayer(item.id)}
                 >
                   {
-                    item.id === curLayer.id && isEdit ? (
+                    form && item.id === curLayer && isEdit ? (
                       <TextField
-                        value={curLayer.title}
-                        onChange={(e) => setCurLayer({
-                          ...curLayer,
-                          title: e.target.value,
-                        })}
+                        value={form.title}
+                        onChange={(e) => setLayerData(curLayer,
+                          { title: e.target.value })}
                       />
                     )
                       : <span>{item.title}</span>
                   }
                   <div className="row-icons">
                     {
-                      item.id === curLayer.id && isEdit ? <Icon.Save size={12} onClick={() => setIsEdit(false)} />
+                      form && item.id === curLayer && isEdit
+                        ? <Icon.Save size={12} onClick={() => setIsEdit(false)} />
                         : <Icon.Edit2 size={12} onClick={() => setIsEdit(true)} />
                     }
                     <Icon.Trash2 size={12} onClick={() => deleteLayer(item.id)} />
-                    { item.hidden ? <Icon.EyeOff size={12} /> : <Icon.Eye size={12} /> }
+                    {
+                      !item.visible
+                        ? <Icon.EyeOff size={12} onClick={() => setVisible(item.id, true)} />
+                        : <Icon.Eye size={12} onClick={() => setVisible(item.id, false)} />
+                    }
                     { item.locked ? <Icon.Lock size={12} /> : <Icon.Unlock size={12} /> }
                   </div>
                 </div>
@@ -192,14 +197,14 @@ const TimeLineView = (props) => {
           </div>
         </div>
       </div>
-      <div id="timeline" className="timeline" />
+      <div id="timeline" className="timeline" style={{ width: props.animationViewSize.width - 180 }} />
     </div>
   );
 };
 
 TimeLineView.propTypes = {
   layers: PropTypes.arrayOf(PropTypes.object).isRequired,
-  curLayer: PropTypes.object.isRequired,
+  curLayer: PropTypes.number.isRequired,
   addNewLayer: PropTypes.func.isRequired,
   deleteLayer: PropTypes.func.isRequired,
   setCurLayer: PropTypes.func.isRequired,
@@ -207,12 +212,17 @@ TimeLineView.propTypes = {
   curTime: PropTypes.number.isRequired,
   changeLayerOrder: PropTypes.func.isRequired,
   setKeyframes: PropTypes.func.isRequired,
+  setLayerData: PropTypes.func.isRequired,
+  animationViewSize: PropTypes.object.isRequired,
+  paused: PropTypes.bool.isRequired,
 };
 
-const mapStateToProps = ({ layer, time }) => ({
+const mapStateToProps = ({ layer, time, template }) => ({
   layers: layer.layers,
   curLayer: layer.curLayer,
   curTime: time.curTime,
+  paused: template.paused,
+  animationViewSize: template.animationViewSize,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
@@ -223,6 +233,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators(
     setCurTime: TimeAction.setCurTime,
     changeLayerOrder: LayerAction.changeLayerOrder,
     setKeyframes: LayerAction.setKeyframes,
+    setLayerData: LayerAction.setLayerData,
   },
   dispatch,
 );

@@ -69,6 +69,7 @@ const initialState = {
     height: 0,
   },
   paused: true,
+  exportMode: false,
 };
 
 export default function templateReducer(state = initialState, action) {
@@ -104,8 +105,13 @@ export default function templateReducer(state = initialState, action) {
         ...state,
         property: {
           ...state.property,
-          background: action.data,
+          background: { ...action.data },
         },
+      };
+    case ACTION.SET_EXPORT_MODE:
+      return {
+        ...state,
+        exportMode: action.data,
       };
     default:
       return state;

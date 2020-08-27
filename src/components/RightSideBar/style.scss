@@ -1,12 +1,33 @@
 .right-sidebar {
     min-width: 280px;
     max-width: 280px;
-    padding: 20px;
     //background-color: #1C274A;
     background-color: #535353;
     border: 1px solid #282828;
     margin: 1px;
     color: #f0f0f0;
+
+    .tabs {
+        background: #2A2A2A;
+
+        .tab {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            color: #8F8F8F;
+            cursor: pointer;
+
+            &.active {
+                color: #f0f0f0;
+                background-color: #535353;
+            }
+        }
+    }
+
+    .content-view {
+        padding: 20px;
+        height: calc(100vh - 30px);
+        overflow-y: scroll;
+    }
 
     .container {
         padding: 0 15px;

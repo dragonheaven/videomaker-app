@@ -8,19 +8,19 @@ import RightSideBar from '../../components/RightSideBar';
 import SceneView from '../../components/SceneView';
 import HorizontalRuler from '../../components/HorizontalRuler';
 import VerticalRuler from '../../components/VerticalRuler';
-import TopView from "../../components/TopView";
+import TopView from '../../components/TopView';
 
 function Home({ animationViewSize }) {
   return (
     <div className="home d-flex">
-      <div className="flex-grow-1 d-flex flex-column position-relative">
+      <div className="d-flex flex-column position-relative" id="main_view">
         <TopView />
         <HorizontalRuler
           interval={5}
           count={animationViewSize.width / 5}
           startPos={20}
         />
-        <div className="d-flex flex-grow-1">
+        <div className="d-flex">
           <VerticalRuler count={animationViewSize.height / 5} />
           <AnimationView />
         </div>

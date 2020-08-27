@@ -2,10 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
+
 import * as TemplateAction from '../../store/actions/template.action';
 import * as TimeAction from '../../store/actions/time.action';
+import * as LayerAction from '../../store/actions/layer.action';
+import * as StageAction from '../../store/actions/stage.action';
 
 import './style.scss';
+
+let handleTickListener;
 
 const templateRequire = require.context('../../templates/', true);
 
@@ -20,8 +25,12 @@ const AnimationView = ({
   setPaused,
   layers,
   maxTime,
+  curLayer,
+  addNewLayer,
+  setLayerData,
+  setExportRoot,
+  exportMode,
 }) => {
-  const AdobeAn = {};
   const [stage, setStage] = useState();
   const [timeline, setTimeline] = useState();
 
@@ -29,11 +38,23 @@ const AnimationView = ({
     let lastW; let lastH; let lastS = 1;
     const resizeCanvas = () => {
       const canvasView = document.getElementById('canvas_view');
+      const mainView = document.getElementById('main_view');
+      const sceneView = document.getElementById('scene_view');
+      const rightSideBar = document.getElementById('right_sidebar');
 
       const w = canvasSize.width; const h = canvasSize.height;
-      const iw = canvasView.clientWidth - 50;
-      const ih = canvasView.clientHeight - 50;
+      const iw = window.innerWidth - rightSideBar.clientWidth - 70;
+      const ih = window.innerHeight - 390;
+      canvasView.style.width = `${window.innerWidth - rightSideBar.clientWidth - 20}px`;
+      canvasView.style.height = `${window.innerHeight - 300}px`;
+      mainView.style.width = `${window.innerWidth - rightSideBar.clientWidth}px`;
+      sceneView.style.width = `${window.innerWidth - rightSideBar.clientWidth}px`;
       const pRatio = window.devicePixelRatio || 1; const xRatio = iw / w; const yRatio = ih / h; let sRatio = 1;
+      setAnimationViewSize({
+        width: window.innerWidth - 300,
+        height: window.innerHeight - 300,
+      });
+
 
       if (isResp) {
         if ((respDim === 'width' && lastW === iw) || (respDim === 'height' && lastH === ih)) {
@@ -63,15 +84,17 @@ const AnimationView = ({
       newStage.tickOnUpdate = false;
       newStage.update();
       newStage.tickOnUpdate = true;
-      setStage(newStage);
+      // setStage(newStage);
     };
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
   };
+  const AdobeAn = {};
 
   const handleTick = (event) => {
-    if (event.paused || !stage) return;
+    if (event.paused || !stage || exportMode) return;
+
     if (timeline.position < maxTime) {
       setCurTime(timeline.position);
     } else {
@@ -79,6 +102,316 @@ const AnimationView = ({
       setPaused(true);
     }
     stage.update();
+  };
+
+  useEffect(() => {
+    if (exportMode) {
+      window.createjs.Ticker.removeEventListener('tick', handleTickListener);
+    }
+  }, [exportMode]);
+
+  const getPos = (x, y, w, h, i) => {
+    const size = 10;
+    switch (i) {
+      case 0:
+        return [x - size, y - size];
+      case 1:
+        return [x + w / 2 - size, y - size];
+      case 2:
+        return [x + w - size, y - size];
+      case 3:
+        return [x + w - size, y + h / 2 - size];
+      case 4:
+        return [x + w - size, y + h - size];
+      case 5:
+        return [x + w / 2 - size, y + h - size];
+      case 6:
+        return [x - size, y + h - size];
+      case 7:
+        return [x - size, y + h / 2 - size];
+      default:
+        break;
+    }
+  };
+
+  const drawSelectors = () => {
+    const layer = layers.find((item) => item.id === curLayer);
+    if (layer && layer.shape && layer.shape !== 'template') {
+      switch (layer.shape.type) {
+        case 'rect':
+          const dashRect = new window.createjs.Shape();
+          dashRect.name = `${layer.title}_select_dash`;
+          dashRect.graphics
+            .setStrokeStyle(2)
+            .setStrokeDash([5, 5], 0)
+            .beginStroke('#fff').drawRect(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
+
+          stage.addChild(dashRect);
+          stage.update();
+          for (let i = 0; i < 8; i++) {
+            const newShape = new window.createjs.Shape();
+            newShape.name = `${layer.title}_select_${i}`;
+            const [x, y] = getPos(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h, i);
+            newShape.graphics.beginFill('#0ff')
+              .setStrokeStyle(2).beginStroke('#000')
+              .drawRect(x, y, 20, 20);
+            stage.addChild(newShape);
+            stage.update();
+          }
+          break;
+        case 'circle':
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
+  const drawLayers = () => {
+    for (let i = 0; i < stage.children.length; i++) {
+      const children = stage.children[i];
+      const layer = layers.find((item) => item.title === children.name);
+      if (!layer) stage.removeChild(children);
+      stage.update();
+    }
+    for (let i = 0; i < layers.length; i++) {
+      const layer = layers[i];
+      if (layer.shape && layer.shape.type) {
+        let shape = stage.getChildByName(layer.title);
+        switch (layer.shape.type) {
+          case 'text':
+            if (!shape) {
+              shape = new window.createjs.Text(layer.shape.text,
+                `${layer.shape.fontSize}px ${layer.shape.fontFamily}`, layer.shape.color);
+              shape.x = layer.shape.x;
+              shape.y = layer.shape.y;
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              stage.addChild(shape);
+            } else {
+              shape.x = layer.shape.x;
+              shape.y = layer.shape.y;
+              shape.text = layer.shape.text;
+              shape.font = `${layer.shape.fontSize}px ${layer.shape.fontFamily}`;
+              shape.color = layer.shape.color;
+            }
+            break;
+          case 'rect':
+            if (!shape) {
+              shape = new window.createjs.Shape();
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              shape.graphics.beginFill(layer.shape.fillColor)
+                .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .drawRect(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
+              stage.addChild(shape);
+            } else {
+              shape.visible = layer.visible;
+              shape.graphics.command.x = layer.shape.x;
+              shape.graphics.command.y = layer.shape.y;
+              shape.graphics._fill.style = layer.shape.fillColor;
+              shape.graphics._stroke.style = layer.shape.strokeColor;
+              if (shape.graphics._strokeStyle) {
+                shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
+              }
+
+              shape.graphics.command.w = layer.shape.w;
+              shape.graphics.command.h = layer.shape.h;
+              shape.rotation = layer.shape.angle;
+            }
+            break;
+          case 'circle':
+            if (!shape) {
+              shape = new window.createjs.Shape();
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              shape.graphics.beginFill(layer.shape.fillColor)
+                .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .drawCircle(layer.shape.x, layer.shape.y, layer.shape.radius);
+              stage.addChild(shape);
+            } else {
+              shape.visible = layer.visible;
+              shape.graphics.command.x = layer.shape.x;
+              shape.graphics.command.y = layer.shape.y;
+              shape.graphics._fill.style = layer.shape.fillColor;
+              shape.graphics._stroke.style = layer.shape.strokeColor;
+              if (shape.graphics._strokeStyle) {
+                shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
+              }
+
+              shape.graphics.command.radius = layer.shape.radius;
+              shape.rotation = layer.shape.angle;
+            }
+            break;
+          case 'ellipse':
+            if (!shape) {
+              shape = new window.createjs.Shape();
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              shape.graphics.beginFill(layer.shape.fillColor)
+                .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .drawEllipse(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
+              stage.addChild(shape);
+            } else {
+              shape.visible = layer.visible;
+              shape.graphics.command.x = layer.shape.x;
+              shape.graphics.command.y = layer.shape.y;
+              shape.graphics._fill.style = layer.shape.fillColor;
+              shape.graphics._stroke.style = layer.shape.strokeColor;
+              if (shape.graphics._strokeStyle) {
+                shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
+              }
+
+              shape.graphics.command.w = layer.shape.w;
+              shape.graphics.command.h = layer.shape.h;
+              shape.rotation = layer.shape.angle;
+            }
+            break;
+          case 'star':
+            if (!shape) {
+              shape = new window.createjs.Shape();
+              shape.name = layer.title;
+              shape.visible = layer.visible;
+              shape.graphics.beginFill(layer.shape.fillColor)
+                .setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
+                .drawPolyStar(layer.shape.x, layer.shape.y,
+                  layer.shape.radius, 5, layer.shape.pointSize, layer.shape.angle);
+              stage.addChild(shape);
+            } else {
+              shape.visible = layer.visible;
+              shape.graphics.command.x = layer.shape.x;
+              shape.graphics.command.y = layer.shape.y;
+              shape.graphics._fill.style = layer.shape.fillColor;
+              shape.graphics._stroke.style = layer.shape.strokeColor;
+              if (shape.graphics._strokeStyle) {
+                shape.graphics._strokeStyle.width = layer.shape.strokeWidth;
+              }
+
+              shape.graphics.command.radius = layer.shape.radius;
+              shape.graphics.command.pointSize = layer.shape.pointSize;
+              shape.graphics.command.angle = layer.shape.angle;
+            }
+            break;
+          default:
+            break;
+        }
+        stage.update();
+      }
+    }
+
+    const childrens = stage.children;
+    for (let i = childrens.length - 1; i >= 0; i--) {
+      for (let j = i - 1; j >= 0; j--) {
+        const first = layers.findIndex((item) => item.shape && item.shape.name === childrens[i].name);
+        const second = layers.findIndex((item) => item.shape && item.shape.name === childrens[j].name);
+        if (first > second) {
+          const temp = stage.children[i];
+          childrens[i] = stage.children[j];
+          childrens[j] = temp;
+          stage.update();
+        }
+      }
+    }
+    // drawSelectors();
+  };
+
+  const addTweens = () => {
+    for (let i = 0; i < layers.length; i++) {
+      const layer = layers[i];
+      const shape = stage.getChildByName(layer.title);
+      // window.createjs.Tween.removeTweens(shape);
+      if (shape && layer.shape.type !== 'template') {
+        const tween = new window.createjs.Tween.get(shape, { override: true });
+        for (let j = 0; j < layer.keyframes.length; j++) {
+          const keyFrame = layer.keyframes[j];
+          const lastTimeVal = j ? layer.keyframes[j - 1].val : 0;
+          if (keyFrame.type === 'wait') {
+            tween.wait(keyFrame.val - lastTimeVal);
+          } else if (keyFrame.type === 'to') {
+            tween.to(keyFrame.data, keyFrame.val - lastTimeVal, window.createjs.Ease[keyFrame.data.anim]);
+          }
+        }
+        tween.bounce = true;
+        timeline.addTween(tween);
+      }
+    }
+    timeline.gotoAndStop(0);
+  };
+
+  const onDropShape = (e) => {
+    const data = e.dataTransfer.getData('type');
+    let shape;
+    switch (data) {
+      case 'rect':
+        shape = {
+          type: 'rect',
+          x: e.clientX,
+          y: e.clientY,
+          w: 100,
+          h: 100,
+          fillColor: '#f00',
+          strokeColor: '#fff',
+          strokeWidth: 1,
+        };
+        break;
+      case 'ellipse':
+        shape = {
+          type: 'ellipse',
+          x: e.clientX,
+          y: e.clientY,
+          w: 100,
+          h: 100,
+          fillColor: '#f00',
+          strokeColor: '#fff',
+          strokeWidth: 1,
+        };
+        break;
+      case 'circle':
+        shape = {
+          type: 'circle',
+          x: e.clientX,
+          y: e.clientY,
+          radius: 50,
+          fillColor: '#f00',
+          strokeColor: '#fff',
+          strokeWidth: 1,
+        };
+        break;
+      case 'star':
+        shape = {
+          type: 'star',
+          x: e.clientX,
+          y: e.clientY,
+          radius: 50,
+          fillColor: '#f00',
+          strokeColor: '#fff',
+          strokeWidth: 1,
+          angle: -90,
+          pointSize: 0.6,
+        };
+        break;
+      case 'text':
+        shape = {
+          type: 'text',
+          x: e.clientX,
+          y: e.clientY,
+          text: 'New Text',
+          fontSize: 25,
+          fontFamily: 'Arial',
+          color: '#f00',
+        };
+        break;
+      default:
+        break;
+    }
+    if (shape) {
+      const form = layers.find((item) => item.id === curLayer);
+      if (!form || form.shape.type) {
+        addNewLayer({ shape, visible: true });
+      } else {
+        setLayerData(curLayer, { shape: { ...form.shape, ...shape }, visible: true });
+      }
+    }
   };
 
   useEffect(() => {
@@ -134,14 +467,16 @@ const AnimationView = ({
         color: backgroundColor,
       },
     });
+    addNewLayer({ title: curTemplate.id, shape: { type: 'template', name: curTemplate.id } });
     newExportRoot.name = curTemplate.id;
     if (paused) newExportRoot.gotoAndStop(0);
 
-    stage.addChildAt(newExportRoot, 0);
-  }, [AdobeAn, curTemplate, paused, setTemplateProperty, stage]);
+    stage.addChild(newExportRoot);
+    setExportRoot(newExportRoot);
+  }, [curTemplate]);
 
   useEffect(() => {
-    if (!stage || !curTemplate) return;
+    if (!stage || !curTemplate || !curTemplate.id) return;
     const newExportRoot = stage.getChildByName(curTemplate.id);
     const { texts, shapes, background } = templateProperty;
     Object.entries(texts).forEach(([key, text]) => {
@@ -158,16 +493,24 @@ const AnimationView = ({
       newExportRoot[key]._shape.visible = shape.visible;
     });
     newExportRoot.shape11._shape.shape.graphics._fill.style = background.color;
-  }, [curTemplate, stage, templateProperty]);
+    drawLayers();
+  }, [templateProperty]);
 
   useEffect(() => {
-    window.createjs.Ticker.maxTime = maxTime;
+    window.createjs.Ticker.removeEventListener('tick', handleTickListener);
+    if (!paused) {
+      setCurTime(0);
+      handleTickListener = window.createjs.Ticker.addEventListener('tick', handleTick);
+    }
   }, [maxTime]);
 
   useEffect(() => {
     if (!stage) return;
-    if (!paused) window.createjs.Ticker.addEventListener('tick', handleTick);
-    else window.createjs.Ticker.removeEventListener('tick', handleTick);
+    if (!paused) {
+      handleTickListener = window.createjs.Ticker.addEventListener('tick', handleTick);
+    } else {
+      // window.createjs.Ticker.removeEventListener('tick', handleTickListener);
+    }
 
     window.createjs.Ticker.paused = !!paused;
     if (curTemplate) {
@@ -178,41 +521,12 @@ const AnimationView = ({
     if (!paused) timeline.gotoAndPlay(curTime);
     else timeline.gotoAndStop(curTime);
     stage.update();
-  }, [curTemplate, curTime, handleTick, paused, stage, timeline]);
-
-  const resizeCanvasView = () => {
-    const canvasView = document.getElementById('canvas_view');
-    if (!canvasView) return;
-    setAnimationViewSize({
-      width: canvasView.clientWidth,
-      height: canvasView.clientHeight,
-    });
-  };
-
-  useEffect(() => {
-    if (!timeline) return;
-
-    for (let i = 0; i < layers.length; i++) {
-      const layer = layers[i];
-      const shape = stage.getChildByName(layer.title);
-
-      const tween = new window.createjs.Tween.get(shape, { override: true });
-      for (let j = 0; j < layer.keyframes.length; j++) {
-        const keyFrame = layer.keyframes[j];
-        const lastTimeVal = j ? layer.keyframes[j - 1].val : 0;
-        if (keyFrame.type === 'wait') {
-          tween.wait(keyFrame.val - lastTimeVal);
-        } else if (keyFrame.type === 'to') {
-          tween.to(keyFrame.data, keyFrame.val - lastTimeVal, window.createjs.Ease[keyFrame.data.anim]);
-        }
-      }
-      timeline.addTween(tween);
-    }
-    timeline.gotoAndStop(0);
-  }, [timeline, layers, stage]);
+  }, [paused]);
 
   useEffect(() => {
     if (!stage) return;
+    drawLayers();
+    addTweens();
     window.createjs.Ticker.framerate = 24;
     window.createjs.Ticker.setFPS(24);
     window.createjs.Ticker.paused = true;
@@ -233,38 +547,53 @@ const AnimationView = ({
       timeline.gotoAndPlay(curTime);
     }
     stage.update();
-  }, [curTemplate, curTime, paused, stage, timeline]);
+  }, [curTime]);
 
   useEffect(() => {
     const newStage = new window.createjs.Stage('canvas');
     setStage(newStage);
+
     const newTimeline = new window.createjs.Timeline();
     setTimeline(newTimeline);
 
-    for (let i = 0; i < layers.length; i++) {
-      const layer = layers[i];
-      const shape = new window.createjs.Shape();
-      shape.name = layer.title;
-      if (layer.shape.type === 'circle') {
-        shape.graphics.beginFill(layer.shape.fillColor).drawCircle(layer.shape.x, layer.shape.y, layer.shape.radius);
-      }
-      newStage.addChild(shape);
-    }
-
-    window.addEventListener('resize', resizeCanvasView);
+    window.createjs.Ticker.timingMode = window.createjs.Ticker.RAF;
     const canvas = document.getElementById('canvas');
     const animContainer = document.getElementById('animation_container');
     const domOverlayContainer = document.getElementById('dom_overlay_container');
     // eslint-disable-next-line max-len
     makeResponsive(true, 'both', false, 1, [canvas, animContainer, domOverlayContainer], newStage, { width: 1280, height: 720 });
-    resizeCanvasView();
-  }, [layers, resizeCanvasView]);
+  }, []);
 
+  useEffect(() => {
+    if (!stage) return;
+    if (paused) {
+      drawLayers();
+      addTweens();
+    } else {
+      setCurTime(0);
+      setPaused(true);
+      drawLayers();
+      addTweens();
+    }
+  }, [layers]);
+
+  useEffect(() => {
+    // drawSelectors();
+  }, [curLayer]);
 
   return (
     <div id="canvas_view" className="animation-view d-flex justify-content-center align-items-center">
-      <div id="animation_container" className="position-relative">
-        <canvas id="canvas" />
+      <div
+        id="animation_container"
+        className="position-relative"
+        onDrop={onDropShape}
+        onDragOver={(e) => {
+          e.preventDefault();
+        }}
+      >
+        <canvas
+          id="canvas"
+        />
         <div id="dom_overlay_container" className="dom-overlay-container position-absolute" />
       </div>
     </div>
@@ -282,15 +611,24 @@ AnimationView.propTypes = {
   setPaused: PropTypes.func.isRequired,
   layers: PropTypes.arrayOf(PropTypes.object).isRequired,
   maxTime: PropTypes.number.isRequired,
+  curLayer: PropTypes.number.isRequired,
+  addNewLayer: PropTypes.func.isRequired,
+  setLayerData: PropTypes.func.isRequired,
+  setExportRoot: PropTypes.func.isRequired,
+  exportMode: PropTypes.bool.isRequired,
 };
 
-const mapStateToProps = ({ template, time, layer }) => ({
+const mapStateToProps = ({
+  template, time, layer,
+}) => ({
   templateProperty: template.property,
   curTemplate: template.curTemplate,
   paused: template.paused,
   curTime: time.curTime,
   layers: layer.layers,
   maxTime: layer.maxTime,
+  curLayer: layer.curLayer,
+  exportMode: template.exportMode,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
@@ -299,6 +637,10 @@ const mapDispatchToProps = (dispatch) => bindActionCreators(
     setAnimationViewSize: TemplateAction.setAnimationViewSize,
     setPaused: TemplateAction.setPaused,
     setCurTime: TimeAction.setCurTime,
+    addNewLayer: LayerAction.addNewLayer,
+    setCurLayer: LayerAction.setCurLayer,
+    setLayerData: LayerAction.setLayerData,
+    setExportRoot: StageAction.setExportRoot,
   },
   dispatch,
 );
