@@ -3,31 +3,42 @@ import * as Icon from 'react-feather';
 import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import * as TemplateAction from '../../store/actions/template.action';
+import * as LayerAction from '../../store/actions/layer.action';
 import Select from '../common/Select';
 
-const TemplateShapeControlView = ({ curProperty, curTemplate, setTemplateProperty }) => {
+const TemplateShapeControlView = ({ curLayer, layers, setLayerData }) => {
   const [curShapeElementKey, setCurShapeElementKey] = useState();
   const [curShapeElement, setCurShapeElement] = useState();
   const [isShapeOpen, setIsShapeOpen] = useState(true);
+  const [form, mutateForm] = useState();
 
   useEffect(() => {
     setCurShapeElementKey(null);
     setCurShapeElement(null);
-  }, [curTemplate]);
+    const layerData = layers.find((item) => item.id === curLayer);
+    if (layerData) {
+      mutateForm(layerData.shape);
+    }
+  }, [curLayer]);
 
   const onChangeCurShapeElementKey = (name, value) => {
     setCurShapeElementKey(value);
-    setCurShapeElement(curProperty.shapes[value]);
+    setCurShapeElement(form.shapes[value]);
   };
 
   const mutateCurShapeElement = (data) => {
     if (!curShapeElementKey || !curShapeElement) return;
     const newShapeElement = { ...curShapeElement, ...data };
     setCurShapeElement(newShapeElement);
-    setTemplateProperty({
-      ...curProperty,
-      shapes: { ...curProperty.shapes, [curShapeElementKey]: newShapeElement },
+    const layerData = layers.find((item) => item.id === curLayer);
+    setLayerData(curLayer, {
+      shape: {
+        ...layerData.shape,
+        shapes: {
+          ...layerData.shape.shapes,
+          [curShapeElementKey]: newShapeElement,
+        },
+      },
     });
   };
 
@@ -47,7 +58,7 @@ const TemplateShapeControlView = ({ curProperty, curTemplate, setTemplatePropert
               <label className="mr-2">Elements:</label>
               <Select
                 name="shape-elements"
-                options={Object.keys(curProperty.shapes)}
+                options={form ? Object.keys(form.shapes) : []}
                 value={curShapeElementKey || ''}
                 placeholder="Shape Element"
                 editable
@@ -72,19 +83,19 @@ const TemplateShapeControlView = ({ curProperty, curTemplate, setTemplatePropert
 };
 
 TemplateShapeControlView.propTypes = {
-  curProperty: PropTypes.object.isRequired,
-  curTemplate: PropTypes.object.isRequired,
-  setTemplateProperty: PropTypes.func.isRequired,
+  curLayer: PropTypes.number.isRequired,
+  setLayerData: PropTypes.func.isRequired,
+  layers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const mapStateToProps = ({ template }) => ({
-  curProperty: template.property,
-  curTemplate: template.curTemplate,
+const mapStateToProps = ({ layer }) => ({
+  curLayer: layer.curLayer,
+  layers: layer.layers,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
   {
-    setTemplateProperty: TemplateAction.setTemplateProperty,
+    setLayerData: LayerAction.setLayerData,
   },
   dispatch,
 );

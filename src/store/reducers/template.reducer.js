@@ -48,16 +48,7 @@ const initialState = {
       entryPoint: 'IndustryCompany9',
     },
   ],
-  curTemplate: {
-    id: '',
-    scriptName: '',
-    entryPoint: null,
-  },
   property: {
-    text1: '',
-    text2: '',
-    texts: [],
-    shapes: [],
     background: {
       color: '',
       image: '',
@@ -68,27 +59,19 @@ const initialState = {
     width: 0,
     height: 0,
   },
+  canvasSize: {
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  },
+  templateList: [],
   paused: true,
   exportMode: false,
 };
 
 export default function templateReducer(state = initialState, action) {
   switch (action.type) {
-    case ACTION.SET_TEMPLATE_PROPERTY:
-      return {
-        ...state,
-        property: {
-          ...state.property,
-          ...action.data,
-        },
-      };
-
-    case ACTION.SET_CUR_TEMPLATE:
-      return {
-        ...state,
-        curTemplate: { ...action.data },
-      };
-
     case ACTION.SET_ANIMATION_VIEW_SIZE:
       return {
         ...state,
@@ -112,6 +95,16 @@ export default function templateReducer(state = initialState, action) {
       return {
         ...state,
         exportMode: action.data,
+      };
+    case ACTION.ADD_TEMPLATE:
+      return {
+        ...state,
+        templateList: [...state.templateList, action.data],
+      };
+    case ACTION.SET_CANVAS_SIZE:
+      return {
+        ...state,
+        canvasSize: { ...action.data },
       };
     default:
       return state;

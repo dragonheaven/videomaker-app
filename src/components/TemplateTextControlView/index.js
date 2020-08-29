@@ -6,7 +6,7 @@ import * as Icon from 'react-feather';
 
 import Select from '../common/Select';
 import Input from '../common/Input';
-import * as TemplateAction from '../../store/actions/template.action';
+import * as LayerAction from '../../store/actions/layer.action';
 import ColorPicker from '../common/ColorPicker';
 
 const textAligns = ['left', 'center', 'right'];
@@ -16,28 +16,39 @@ export const fontSizes = ['10', '12', '15', '18', '20', '25', '30', '35', '40', 
 export const fontFamilies = ['Arial', 'Arvo Regular', 'Arvo Bold', 'Bebas Neue', 'Bree Serif',
   'Chunkfive', 'Sans-serif', 'serif', 'cursive'];
 
-const TemplateTextControlView = ({ curProperty, curTemplate, setTemplateProperty }) => {
+const TemplateTextControlView = ({ curLayer, layers, setLayerData }) => {
   const [curTextElementKey, setCurTextElementKey] = useState();
   const [curTextElement, setCurTextElement] = useState();
   const [isTextOpen, setIsTextOpen] = useState(true);
+  const [form, mutateForm] = useState();
 
   useEffect(() => {
     setCurTextElementKey(null);
     setCurTextElement(null);
-  }, [curTemplate]);
+    const layerData = layers.find((item) => item.id === curLayer);
+    if (layerData) {
+      mutateForm(layerData.shape);
+    }
+  }, [curLayer]);
 
   const onChangeCurTextElementKey = (name, value) => {
     setCurTextElementKey(value);
-    setCurTextElement(curProperty.texts[value]);
+    setCurTextElement(form.texts[value]);
   };
 
   const mutateCurTextElement = (data) => {
     if (!curTextElementKey || !curTextElement) return;
     const newTextElement = { ...curTextElement, ...data };
     setCurTextElement(newTextElement);
-    setTemplateProperty({
-      ...curProperty,
-      texts: { ...curProperty.texts, [curTextElementKey]: newTextElement },
+    const layerData = layers.find((item) => item.id === curLayer);
+    setLayerData(curLayer, {
+      shape: {
+        ...layerData.shape,
+        texts: {
+          ...layerData.shape.texts,
+          [curTextElementKey]: newTextElement,
+        },
+      },
     });
   };
 
@@ -91,7 +102,7 @@ const TemplateTextControlView = ({ curProperty, curTemplate, setTemplateProperty
               <label className="mr-2">Elements:</label>
               <Select
                 name="text-elements"
-                options={Object.keys(curProperty.texts)}
+                options={form ? Object.keys(form.texts) : []}
                 value={curTextElementKey || ''}
                 placeholder="Text Element"
                 editable
@@ -208,19 +219,19 @@ const TemplateTextControlView = ({ curProperty, curTemplate, setTemplateProperty
 };
 
 TemplateTextControlView.propTypes = {
-  curProperty: PropTypes.object.isRequired,
-  curTemplate: PropTypes.object.isRequired,
-  setTemplateProperty: PropTypes.func.isRequired,
+  curLayer: PropTypes.number.isRequired,
+  setLayerData: PropTypes.func.isRequired,
+  layers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const mapStateToProps = ({ template }) => ({
-  curProperty: template.property,
-  curTemplate: template.curTemplate,
+const mapStateToProps = ({ layer }) => ({
+  curLayer: layer.curLayer,
+  layers: layer.layers,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
   {
-    setTemplateProperty: TemplateAction.setTemplateProperty,
+    setLayerData: LayerAction.setLayerData,
   },
   dispatch,
 );

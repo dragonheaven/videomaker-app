@@ -4,14 +4,12 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
-import * as TemplateAction from '../../store/actions/template.action';
 import * as LayerAction from '../../store/actions/layer.action';
 import { fontFamilies, fontSizes } from '../TemplateTextControlView';
 import Input from '../common/Input';
 import Select from '../common/Select';
 import ColorPicker from '../common/ColorPicker';
 import './style.scss';
-
 
 const ShapeControlView = ({ curLayer, layers, setLayerData }) => {
   const [isShapeOpen, setIsShapeOpen] = useState(true);
@@ -147,7 +145,7 @@ const ShapeControlView = ({ curLayer, layers, setLayerData }) => {
               )
             }
             {
-              form && form.shape && (form.shape.type === 'star')
+              form && form.shape
               && (
                 <div className="col-md-12 mb-2 mt-4 d-flex align-items-center">
                   <label className="mr-2">Angle:</label>
@@ -226,7 +224,6 @@ const mapStateToProps = ({ template, layer }) => ({
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
   {
-    setTemplateProperty: TemplateAction.setTemplateProperty,
     setCurLayer: LayerAction.setCurLayer,
     setLayerData: LayerAction.setLayerData,
   },

@@ -1,15 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { CircularProgress } from '@material-ui/core';
-
+import './style.scss';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import CCapture from 'ccapture.js';
 import Progress from 'react-progressbar';
-
+import createjs from 'createjs'
+import { CircularProgress } from '@material-ui/core';
 import Modal from '../common/Modal';
 import * as TemplateAction from '../../store/actions/template.action';
-import './style.scss';
 
 const templateRequire = require.context('../../templates/', true);
 
@@ -28,47 +27,36 @@ class ExportVideoModal extends React.Component {
 
   componentDidMount() {
     this.canvas = document.getElementById('canvas_export');
-    this.exportStage = new window.createjs.Stage('canvas_export');
-    this.timeline = new window.createjs.Timeline();
+    this.exportStage = new createjs.Stage('canvas_export');
+    this.timeline = new createjs.Timeline();
     this.drawLayers();
     this.addTweens();
-    this.updateExportStage();
   }
-
-  updateExportStage = () => {
-    const { curTemplate, templateProperty } = this.props;
-    const newExportRoot = this.exportStage.getChildByName(curTemplate.id);
-    if (!newExportRoot) return;
-    const { texts, shapes, background } = templateProperty;
-    Object.entries(texts).forEach(([key, text]) => {
-      newExportRoot[key]._text.text = text.text;
-      newExportRoot[key]._text.color = text.color;
-      newExportRoot[key]._text.textAlign = text.textAlign;
-      newExportRoot[key]._text.textBaseline = text.textBaseline;
-      newExportRoot[key]._text.font = text.font;
-      newExportRoot[key]._text.x = text.x;
-      newExportRoot[key]._text.y = text.y;
-      newExportRoot[key].rotation = text.rotation;
-    });
-    Object.entries(shapes).forEach(([key, shape]) => {
-      newExportRoot[key]._shape.visible = shape.visible;
-    });
-    newExportRoot.shape11._shape.shape.graphics._fill.style = background.color;
-    this.exportStage.update();
-  };
 
   onProgress = (progress) => {
     this.setState({ progress });
   };
 
   handleTick = () => {
-    const { maxTime } = this.props;
-
+    const { maxTime, layers, keyframes } = this.props;
     if (!this.exportStage) return;
     if (this.timeline.position >= maxTime) {
-      window.createjs.Ticker.removeEventListener('tick', handleTickExport);
+      createjs.Ticker.removeEventListener('tick', handleTickExport);
       this.capturer.stop();
       this.capturer.save(this.showVideoLink);
+    } else {
+      const templateLayers = layers.filter((item) => item.shape.type === 'template');
+      for (let i = 0; i < templateLayers.length; i++) {
+        const layer = templateLayers[i];
+        const exportRoot = this.exportStage.getChildByName(layer.title);
+        const layerKeyframes = keyframes.find((item) => item.layerId === layer.id).keyframes;
+        if (this.timeline.position < layerKeyframes[0].val || this.timeline.position > layerKeyframes[1].val) {
+          exportRoot.visible = false;
+        } else {
+          exportRoot.visible = true;
+          exportRoot.gotoAndStop((this.timeline.position - layerKeyframes[0].val) / 24);
+        }
+      }
     }
     this.exportStage.update();
   };
@@ -98,18 +86,21 @@ class ExportVideoModal extends React.Component {
         switch (layer.shape.type) {
           case 'text':
             if (!shape) {
-              shape = new window.createjs.Text(layer.shape.text,
+              shape = new createjs.Text(layer.shape.text,
                 `${layer.shape.fontSize}px ${layer.shape.fontFamily}`, layer.shape.color);
-              shape.x = layer.shape.x;
-              shape.y = layer.shape.y;
               shape.name = layer.title;
               shape.visible = layer.visible;
+              shape.regX = shape.getMeasuredWidth() / 2;
+              shape.regY = shape.getMeasuredHeight() / 2;
+              shape.x = layer.shape.x + shape.getMeasuredWidth() / 2;
+              shape.y = layer.shape.y + shape.getMeasuredHeight() / 2;
+              shape.rotation = layer.shape.angle;
               this.exportStage.addChild(shape);
             }
             break;
           case 'rect':
             if (!shape) {
-              shape = new window.createjs.Shape();
+              shape = new createjs.Shape();
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor);
@@ -121,14 +112,19 @@ class ExportVideoModal extends React.Component {
                 shape.graphics.setStrokeDash([0, 0], 0);
               }
               shape.graphics.setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-                .drawRect(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
+                .drawRect(0, 0, layer.shape.w, layer.shape.h);
 
               this.exportStage.addChild(shape);
             }
+            shape.rotation = layer.shape.angle;
+            shape.regX = layer.shape.w / 2;
+            shape.regY = layer.shape.h / 2;
+            shape.x = layer.shape.x + layer.shape.w / 2;
+            shape.y = layer.shape.y + layer.shape.h / 2;
             break;
           case 'circle':
             if (!shape) {
-              shape = new window.createjs.Shape();
+              shape = new createjs.Shape();
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor);
@@ -139,15 +135,19 @@ class ExportVideoModal extends React.Component {
               } else {
                 shape.graphics.setStrokeDash([0, 0], 0);
               }
-
               shape.graphics.setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-                .drawCircle(layer.shape.x, layer.shape.y, layer.shape.radius);
+                .drawCircle(0, 0, layer.shape.radius);
+              shape.regX = 0;
+              shape.regY = 0;
+              shape.x = layer.shape.x;
+              shape.y = layer.shape.y;
+              shape.rotation = layer.shape.angle;
               this.exportStage.addChild(shape);
             }
             break;
           case 'ellipse':
             if (!shape) {
-              shape = new window.createjs.Shape();
+              shape = new createjs.Shape();
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor);
@@ -159,13 +159,18 @@ class ExportVideoModal extends React.Component {
                 shape.graphics.setStrokeDash([0, 0], 0);
               }
               shape.graphics.setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-                .drawEllipse(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
+                .drawEllipse(0, 0, layer.shape.w, layer.shape.h);
               this.exportStage.addChild(shape);
             }
+            shape.regX = layer.shape.w / 2;
+            shape.regY = layer.shape.h / 2;
+            shape.x = layer.shape.x + layer.shape.w / 2;
+            shape.y = layer.shape.y + layer.shape.h / 2;
+            shape.rotation = layer.shape.angle;
             break;
           case 'star':
             if (!shape) {
-              shape = new window.createjs.Shape();
+              shape = new createjs.Shape();
               shape.name = layer.title;
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor);
@@ -183,16 +188,35 @@ class ExportVideoModal extends React.Component {
             }
             break;
           case 'template':
-            const AdobeAn = {};
-            const templateScript = (templateRequire(`./${this.props.curTemplate.scriptName}`)).default;
-            templateScript(window.createjs, AdobeAn);
+            if (!shape) {
+              const AdobeAn = {};
+              const templateScript = (templateRequire(`./${layer.shape.scriptName}`)).default;
+              templateScript(createjs, AdobeAn);
 
-            const key = Object.keys(AdobeAn.compositions)[0];
-            const comp = AdobeAn.getComposition(key);
-            const lib = comp.getLibrary();
-            const newExportRoot = new lib[this.props.curTemplate.entryPoint]();
-            newExportRoot.name = this.props.curTemplate.id;
-            this.exportStage.addChild(newExportRoot);
+              const key = Object.keys(AdobeAn.compositions)[0];
+              const comp = AdobeAn.getComposition(key);
+              const lib = comp.getLibrary();
+              shape = new lib[layer.shape.entryPoint]();
+              shape.name = layer.title;
+              this.exportStage.addChild(shape);
+              shape.gotoAndStop(0);
+            }
+            shape.visible = layer.visible;
+            const { texts, shapes, background } = layer.shape;
+            Object.entries(texts).forEach(([key, text]) => {
+              shape[key]._text.text = text.text;
+              shape[key]._text.color = text.color;
+              shape[key]._text.textAlign = text.textAlign;
+              shape[key]._text.textBaseline = text.textBaseline;
+              shape[key]._text.font = text.font;
+              shape[key]._text.x = text.x;
+              shape[key]._text.y = text.y;
+              shape[key].rotation = text.rotation;
+            });
+            Object.entries(shapes).forEach(([key, item]) => {
+              shape[key]._shape.visible = item.visible;
+            });
+            shape.shape11._shape.shape.graphics._fill.style = background;
             break;
           default:
             break;
@@ -217,25 +241,33 @@ class ExportVideoModal extends React.Component {
   };
 
   addTweens = () => {
-    const { layers } = this.props;
+    const { layers, maxTime, keyframes } = this.props;
     for (let i = 0; i < layers.length; i++) {
       const layer = layers[i];
       const shape = this.exportStage.getChildByName(layer.title);
-
-      if (shape && layer.shape.type !== 'template') {
-        window.createjs.Tween.removeTweens(shape);
-        const tween = new window.createjs.Tween.get(shape);
-
-        for (let j = 0; j < layer.keyframes.length; j++) {
-          const keyFrame = layer.keyframes[j];
-          const lastTimeVal = j ? layer.keyframes[j - 1].val : 0;
+      const layerKeyframes = keyframes.find((item) => item.layerId === layer.id).keyframes;
+      if (shape && layer.shape.type !== 'template' && layerKeyframes) {
+        createjs.Tween.removeTweens(shape);
+        const tween = new createjs.Tween.get(shape);
+        for (let j = 0; j < layerKeyframes.length; j++) {
+          const keyFrame = layerKeyframes[j];
+          const lastTimeVal = j ? layerKeyframes[j - 1].val : 0;
           if (keyFrame.type === 'wait') {
             tween.wait(keyFrame.val - lastTimeVal);
           } else if (keyFrame.type === 'to') {
-            tween.to(keyFrame.data, keyFrame.val - lastTimeVal, window.createjs.Ease[keyFrame.data.anim]);
+            tween.to(keyFrame.data, keyFrame.val - lastTimeVal, createjs.Ease[keyFrame.data.anim]);
           }
         }
+        tween.to({ visible: false, alpha: 0 }, 100)
+          .wait(maxTime - layerKeyframes[layerKeyframes.length - 1].val - 100);
+        tween.bounce = true;
         this.timeline.addTween(tween);
+      } else if (layer.shape.type === 'template') {
+        const tween = new createjs.Tween.get(shape, { override: true })
+          .wait(layerKeyframes[layerKeyframes.length - 1].val);
+        tween.to({ visible: false }, 10)
+          .wait(maxTime - layerKeyframes[layerKeyframes.length - 1].val - 20)
+          .to({ visible: true }, 10);
       }
     }
     this.timeline.gotoAndStop(0);
@@ -254,15 +286,15 @@ class ExportVideoModal extends React.Component {
   };
 
   startExport = () => {
-    handleTickExport = window.createjs.Ticker.addEventListener('tick', this.handleTick);
-    window.createjs.Ticker.paused = false;
+    handleTickExport = createjs.Ticker.addEventListener('tick', this.handleTick);
+    createjs.Ticker.paused = false;
     this.timeline.gotoAndPlay(0);
     this.exportStage.update();
-
+    createjs.Ticker.framerate = 16;
     this.capturer = new CCapture({
       format: 'ffmpegserver',
       verbose: true,
-      framerate: 24,
+      framerate: 16,
       onProgress: this.onProgress,
       extension: '.mp4',
     });
@@ -273,7 +305,10 @@ class ExportVideoModal extends React.Component {
   };
 
   onExportClose = () => {
-    window.createjs.Ticker.removeEventListener('tick', handleTickExport);
+    createjs.Ticker.removeEventListener('tick', handleTickExport);
+    if (this.capturer) {
+      this.capturer.stop();
+    }
     this.props.onClose();
     this.props.setExportMode(false);
   };
@@ -296,31 +331,31 @@ class ExportVideoModal extends React.Component {
           title="Export Video"
         >
           <div className="modal-body">
-            <canvas id="canvas_export" width={1280} height={720} style={{ display: 'none' }} />
+            <canvas id="canvas_export" className="canvas-export" width={1280} height={720} />
             <div>
               <Progress
                 completed={
-                  Math.floor((frameNum * 10000) / (6 * maxTime) > 100 ? 100 : (frameNum * 10000) / (6 * maxTime))
+                  Math.floor((frameNum * 10000) / (3 * maxTime) > 100 ? 100 : (frameNum * 10000) / (3 * maxTime))
                 }
               />
               <Progress completed={Math.floor(progress * 100)} />
             </div>
-          </div>
-          <div className="modal-footer">
-            {
-              url && <a href={url} className="btn btn-success" onClick={this.onDownload} target="#">Download</a>
-            }
-            {
-              !url
-              && (
-                <button className="btn btn-primary btn-export" onClick={this.startExport}>
-                  {
-                    frameNum === 0 ? 'Export' : <CircularProgress size={18} color="inherit" />
-                  }
-                </button>
-              )
-            }
-            <button className="btn btn-danger" data-dismiss="modal" onClick={this.onExportClose}>Cancel</button>
+            <div className="modal-footer">
+              {
+                url && <a href={url} className="btn btn-success" onClick={this.onDownload} target="#">Download</a>
+              }
+              {
+                !url
+                && (
+                  <button className="btn btn-primary btn-export" onClick={this.startExport}>
+                    {
+                      frameNum === 0 ? 'Export' : <CircularProgress size={18} color="inherit" />
+                    }
+                  </button>
+                )
+              }
+              <button className="btn btn-danger" data-dismiss="modal" onClick={this.onExportClose}>Cancel</button>
+            </div>
           </div>
         </Modal>
       </>
@@ -332,17 +367,15 @@ ExportVideoModal.propTypes = {
   show: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+  keyframes: PropTypes.arrayOf(PropTypes.object).isRequired,
   maxTime: PropTypes.number.isRequired,
-  curTemplate: PropTypes.object.isRequired,
-  templateProperty: PropTypes.object.isRequired,
   setExportMode: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = ({ layer, template }) => ({
+const mapStateToProps = ({ layer }) => ({
   layers: layer.layers,
+  keyframes: layer.keyframes,
   maxTime: layer.maxTime,
-  curTemplate: template.curTemplate,
-  templateProperty: template.property,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(

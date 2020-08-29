@@ -1,9 +1,10 @@
 import ACTION from '../actionTypes';
 
-export function addNewLayer(data) {
+export function addNewLayer(data, keyframes) {
   return {
     type: ACTION.ADD_NEW_LAYER,
     data,
+    keyframes,
   };
 }
 

@@ -6,9 +6,13 @@ import CircleOutlineIcon from 'mdi-react/CircleOutlineIcon';
 import StarIcon from 'mdi-react/StarIcon';
 import './style.scss';
 import PublishButton from '../PublishButton';
+import AddTemplateButton from "../AddTemplateButton";
 
 const TopView = () => (
   <div className="top-view d-flex">
+    <div className="d-flex align-items-center text-white m-2">
+      <AddTemplateButton />
+    </div>
     <div className="d-flex flex-grow-1 justify-content-center align-items-center">
       <div
         className="drag-icon"

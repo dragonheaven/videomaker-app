@@ -12,42 +12,13 @@ const initialState = {
         type: 'rect',
         x: 40,
         y: 40,
-        w: 200,
-        h: 200,
+        w: 150,
+        h: 150,
         strokeStyle: 'solid',
         strokeWidth: 15,
         strokeColor: '#000000',
         fillColor: '#ff0000',
       },
-      keyframes: [
-        {
-          cursor: 'default',
-          type: 'wait',
-          val: 300,
-        },
-        {
-          type: 'to',
-          data: { scaleX: 2, scaleY: 2 },
-          val: 1300,
-        },
-        {
-          type: 'to',
-          data: { alpha: 1, x: 700 },
-          val: 4100,
-        },
-        {
-          type: 'to',
-          data: {
-            scaleX: 1, scaleY: 1, y: 500, x: 0,
-          },
-          val: 6100,
-        },
-        {
-          type: 'to',
-          data: { y: 0, x: 0 },
-          val: 7100,
-        },
-      ],
     },
     {
       id: 1,
@@ -65,6 +36,11 @@ const initialState = {
         strokeColor: '#000000',
         fillColor: '#ffff00',
       },
+    },
+  ],
+  keyframes: [
+    {
+      layerId: 0,
       keyframes: [
         {
           cursor: 'default',
@@ -78,19 +54,51 @@ const initialState = {
         },
         {
           type: 'to',
-          data: { alpha: 1, x: 700 },
+          data: { alpha: 1, x: 990 },
           val: 4100,
         },
         {
           type: 'to',
           data: {
-            scaleX: 1, scaleY: 1, y: 500, x: 0,
+            scaleX: 1, scaleY: 1, y: 640, x: 290,
           },
           val: 6100,
         },
         {
           type: 'to',
-          data: { y: 0, x: 0 },
+          data: { y: 240, x: 290 },
+          val: 7100,
+        },
+      ],
+    },
+    {
+      layerId: 1,
+      keyframes: [
+        {
+          cursor: 'default',
+          type: 'wait',
+          val: 300,
+        },
+        {
+          type: 'to',
+          data: { scaleX: 2, scaleY: 2 },
+          val: 1300,
+        },
+        {
+          type: 'to',
+          data: { alpha: 1, x: 940 },
+          val: 4100,
+        },
+        {
+          type: 'to',
+          data: {
+            scaleX: 1, scaleY: 1, y: 740, x: 240,
+          },
+          val: 6100,
+        },
+        {
+          type: 'to',
+          data: { y: 240, x: 240 },
           val: 8100,
         },
       ],
@@ -103,6 +111,7 @@ const initialState = {
 
 export default function layerReducer(state = initialState, action) {
   let newLayers = [];
+  let newMaxTime;
   switch (action.type) {
     case ACTION.ADD_NEW_LAYER:
       const newLayer = action.data.title ? action.data : {
@@ -112,21 +121,13 @@ export default function layerReducer(state = initialState, action) {
           ...action.data.shape,
           name: `Layer ${state.maxLayerId}`,
         },
-        keyframes: [
-          { val: 0 },
-          { val: 500 },
-        ],
       };
       newLayer.id = state.maxLayerId;
-      const templateExist = (newLayer.shape && newLayer.shape.type === 'template')
-        && state.layers.find((item) => item.shape && item.shape.type === 'template');
-      newLayers = templateExist
-        ? state.layers.map((item) => (item.shape && item.shape.type === 'template' ? newLayer : item))
-        : [...state.layers, newLayer];
       return {
         ...state,
-        layers: newLayers,
+        layers: [...state.layers, newLayer],
         maxLayerId: state.maxLayerId + 1,
+        keyframes: [...state.keyframes, { layerId: newLayer.id, keyframes: action.keyframes }],
         curLayer: newLayer.id,
       };
     case ACTION.SET_CUR_LAYER:
@@ -135,9 +136,18 @@ export default function layerReducer(state = initialState, action) {
         curLayer: action.curLayer,
       };
     case ACTION.DELETE_LAYER:
+      newMaxTime = 0;
+      state.keyframes.forEach((item) => {
+        if (item.layerId !== action.layerId && item.keyframes
+          && newMaxTime < item.keyframes[item.keyframes.length - 1].val) {
+          newMaxTime = item.keyframes[item.keyframes.length - 1].val;
+        }
+      });
       return {
         ...state,
         layers: state.layers.filter((item) => item.id !== action.layerId),
+        keyframes: state.keyframes.filter((item) => item.layerId !== action.layerId),
+        maxTime: newMaxTime,
       };
     case ACTION.CHANGE_LAYER_ORDER:
       const indexOfLayer = state.layers.findIndex((item) => item.id === action.layerId);
@@ -148,21 +158,30 @@ export default function layerReducer(state = initialState, action) {
         if (index === indexOfLayer) return layer2;
         return layer1;
       });
+      const keyframe1 = state.keyframes.find((item) => item.layerId === action.layerId);
+      const keyframe2 = state.keyframes[indexOfLayer + action.amount];
+      const newKeyframes = state.keyframes.map((item, index) => {
+        if (index !== indexOfLayer && index !== indexOfLayer + action.amount) return item;
+        if (index === indexOfLayer) return keyframe2;
+        return keyframe1;
+      });
       return {
         ...state,
         layers: newLayers,
+        keyframes: newKeyframes,
       };
     case ACTION.SET_KEY_FRAMES:
-      let newMaxTime = action.data[action.data.length - 1].val;
-      state.layers.forEach((layer) => {
-        if (layer.id !== action.layerId && layer.keyframes
-          && newMaxTime < layer.keyframes[layer.keyframes.length - 1].val) {
-          newMaxTime = layer.keyframes[layer.keyframes.length - 1].val;
+      newMaxTime = action.data[action.data.length - 1].val;
+      state.keyframes.forEach((item) => {
+        if (item.layerId !== action.layerId && item.keyframes
+          && newMaxTime < item.keyframes[item.keyframes.length - 1].val) {
+          newMaxTime = item.keyframes[item.keyframes.length - 1].val;
         }
       });
       return {
         ...state,
-        layers: state.layers.map((item) => (item.id === action.layerId ? { ...item, keyframes: action.data } : item)),
+        keyframes: state.keyframes.map((item) => (
+          item.layerId === action.layerId ? { ...item, keyframes: action.data } : item)),
         maxTime: newMaxTime,
       };
     case ACTION.SET_LAYER_DATA:

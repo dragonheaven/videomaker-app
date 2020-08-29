@@ -41,8 +41,8 @@ const TimeLineView = (props) => {
   };
 
   const onDragFinished = (obj) => {
-    const layer = obj.elements[0].row;
-    props.setKeyframes(layer.id, layer.keyframes);
+    const data = obj.elements[0].row;
+    props.setKeyframes(data.layerId, data.keyframes);
   };
 
   const onDrag = () => {
@@ -59,7 +59,7 @@ const TimeLineView = (props) => {
   }, []);
 
   useEffect(() => {
-    const { layers } = props;
+    const { keyframes } = props;
     if (!timeline) return;
 
     timeline.initialize({
@@ -90,7 +90,7 @@ const TimeLineView = (props) => {
         },
       },
     });
-    timeline.setModel({ rows: layers });
+    timeline.setModel({ rows: keyframes });
     timeline.onTimeChanged(onTimeChanged);
     timeline.onScroll(onScrollChange);
     timeline.onDragStarted(onDragStarted);
@@ -106,8 +106,8 @@ const TimeLineView = (props) => {
 
   useEffect(() => {
     if (!timeline) return;
-    timeline.setModel({ rows: props.layers });
-  }, [props.layers]);
+    timeline.setModel({ rows: props.keyframes });
+  }, [props.keyframes]);
 
   const addNewLayer = () => {
     props.addNewLayer({});
@@ -200,6 +200,7 @@ const TimeLineView = (props) => {
 
 TimeLineView.propTypes = {
   layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+  keyframes: PropTypes.arrayOf(PropTypes.object).isRequired,
   curLayer: PropTypes.number.isRequired,
   addNewLayer: PropTypes.func.isRequired,
   deleteLayer: PropTypes.func.isRequired,
@@ -214,6 +215,7 @@ TimeLineView.propTypes = {
 
 const mapStateToProps = ({ layer, time, template }) => ({
   layers: layer.layers,
+  keyframes: layer.keyframes,
   curLayer: layer.curLayer,
   curTime: time.curTime,
   paused: template.paused,

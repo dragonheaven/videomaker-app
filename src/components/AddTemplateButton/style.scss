@@ -1,0 +1,36 @@
+.btn-add-template {
+    padding: 0.1rem 0.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    &:hover {
+        color: black !important;
+        background-color: #f0f0f0;
+    }
+}
+
+.add-template {
+    position: relative;
+}
+
+.template-group {
+    position: absolute;
+    left: 0;
+    z-index: 99;
+    top: 115%;
+    border-radius: 5px;
+    background-color: white;
+    padding: 0.5rem;
+
+    .template-item {
+        color: black;
+        padding: 0.2rem 1rem;
+        width: 140px;
+
+        &:hover {
+            color: white;
+            background-color: #2A2A2A;
+            opacity: 0.4;
+        }
+    }
+}

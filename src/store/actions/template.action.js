@@ -1,19 +1,5 @@
 import ACTION from '../actionTypes';
 
-export function setTemplateProperty(data) {
-  return {
-    type: ACTION.SET_TEMPLATE_PROPERTY,
-    data,
-  };
-}
-
-export function setCurTemplate(data) {
-  return {
-    type: ACTION.SET_CUR_TEMPLATE,
-    data,
-  };
-}
-
 export function setAnimationViewSize(data) {
   return {
     type: ACTION.SET_ANIMATION_VIEW_SIZE,
@@ -28,16 +14,23 @@ export function setPaused(data) {
   };
 }
 
-export function setTemplateBackground(data) {
+export function setExportMode(data) {
   return {
-    type: ACTION.SET_TEMPLATE_BACKGROUND,
+    type: ACTION.SET_EXPORT_MODE,
     data,
   };
 }
 
-export function setExportMode(data) {
+export function addTemplate(data) {
   return {
-    type: ACTION.SET_EXPORT_MODE,
+    type: ACTION.ADD_TEMPLATE,
+    data,
+  };
+}
+
+export function setCanvasSize(data) {
+  return {
+    type: ACTION.SET_CANVAS_SIZE,
     data,
   };
 }

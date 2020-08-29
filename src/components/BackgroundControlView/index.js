@@ -1,16 +1,31 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import * as Icon from 'react-feather';
 import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import * as TemplateAction from '../../store/actions/template.action';
+import * as LayerAction from '../../store/actions/layer.action';
 import ColorPicker from '../common/ColorPicker';
 
-const BackgroundControlView = ({ background, setTemplateBackground }) => {
+const BackgroundControlView = ({ curLayer, layers, setLayerData }) => {
   const [isShapeOpen, setIsShapeOpen] = useState(true);
+  const [background, setBackground] = useState();
 
-  const mutateBackground = (data) => {
-    setTemplateBackground(Object.assign(background, data));
+  useEffect(() => {
+    const layerData = layers.find((item) => item.id === curLayer);
+    if (layerData) {
+      setBackground(layerData.shape.background);
+    }
+  }, [curLayer]);
+
+  const mutateBackground = (color) => {
+    setBackground(color);
+    const layerData = layers.find((item) => item.id === curLayer);
+    setLayerData(curLayer, {
+      shape: {
+        ...layerData.shape,
+        background: color,
+      },
+    });
   };
 
   return (
@@ -28,20 +43,20 @@ const BackgroundControlView = ({ background, setTemplateBackground }) => {
             <div className="col-md-12 mb-2 d-flex align-items-center">
               <label className="mr-2">Back Color:</label>
               <ColorPicker
-                color={background.color}
-                setColor={(color) => mutateBackground({ color })}
+                color={background}
+                setColor={(color) => mutateBackground(color)}
               />
             </div>
-            <div className="col-md-12 mb-2 d-flex align-items-center">
-              <label className="mr-2">Visible:</label>
-              <input
-                type="checkbox"
-                name="text"
-                placeholder="Text"
-                checked={background.show ? background.show : false}
-                onChange={(e) => mutateBackground({ show: e.target.checked })}
-              />
-            </div>
+            {/*<div className="col-md-12 mb-2 d-flex align-items-center">*/}
+            {/*  <label className="mr-2">Visible:</label>*/}
+            {/*  <input*/}
+            {/*    type="checkbox"*/}
+            {/*    name="text"*/}
+            {/*    placeholder="Text"*/}
+            {/*    checked={background.show ? background.show : false}*/}
+            {/*    onChange={(e) => mutateBackground({ show: e.target.checked })}*/}
+            {/*  />*/}
+            {/*</div>*/}
           </div>
         )
       }
@@ -50,19 +65,20 @@ const BackgroundControlView = ({ background, setTemplateBackground }) => {
 };
 
 BackgroundControlView.propTypes = {
-  setTemplateBackground: PropTypes.func.isRequired,
-  background: PropTypes.object.isRequired,
+  setLayerData: PropTypes.func.isRequired,
+  curLayer: PropTypes.number.isRequired,
+  layers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const mapStateToProps = ({ template }) => ({
-  background: template.property.background,
+const mapStateToProps = ({ template, layer }) => ({
   curTemplate: template.curTemplate,
+  curLayer: layer.curLayer,
+  layers: layer.layers,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
   {
-    setTemplateProperty: TemplateAction.setTemplateProperty,
-    setTemplateBackground: TemplateAction.setTemplateBackground,
+    setLayerData: LayerAction.setLayerData,
   },
   dispatch,
 );

@@ -15,20 +15,20 @@ let handleTickListener;
 const templateRequire = require.context('../../templates/', true);
 
 const AnimationView = ({
-  templateProperty,
-  curTemplate,
-  setTemplateProperty,
   setAnimationViewSize,
+  setCanvasSize,
   paused,
   curTime,
   setCurTime,
   setPaused,
   layers,
+  keyframes,
   maxTime,
   curLayer,
   addNewLayer,
   setLayerData,
   exportMode,
+  canvasSize,
 }) => {
   const [stage, setStage] = useState();
   const [timeline, setTimeline] = useState();
@@ -74,6 +74,12 @@ const AnimationView = ({
         style.width = `${w * sRatio}px`;
         style.height = `${h * sRatio}px`;
       });
+      setCanvasSize({
+        x: (window.innerWidth - rightSideBar.clientWidth - 20 - w * sRatio) / 2 + 20,
+        y: (window.innerHeight - 250 - 60 - h * sRatio) / 2 + 60,
+        width: w * sRatio,
+        height: h * sRatio,
+      });
       const newStage = stage;
       newStage.scaleX = pRatio * sRatio;
       newStage.scaleY = pRatio * sRatio;
@@ -91,18 +97,16 @@ const AnimationView = ({
   };
   const AdobeAn = {};
 
-  const handleTick = (maxTime) => {
-    return (event) => {
-      if (event.paused || !stage || exportMode) return;
+  const handleTick = (event) => {
+    if (event.paused || !stage || exportMode) return;
 
-      if (timeline.position < maxTime) {
-        setCurTime(timeline.position);
-      } else {
-        setCurTime(0);
-        setPaused(true);
-      }
-      stage.update();
-    };
+    if (timeline.position < maxTime) {
+      setCurTime(timeline.position);
+    } else {
+      setCurTime(0);
+      setPaused(true);
+    }
+    stage.update();
   };
 
   useEffect(() => {
@@ -114,21 +118,21 @@ const AnimationView = ({
   const getPos = (x, y, w, h, cornSize, i) => {
     switch (i) {
       case 0:
-        return [x - cornSize, y - cornSize];
+        return [x - cornSize, y - cornSize, w / 2, h / 2];
       case 1:
-        return [x + w / 2 - cornSize, y - cornSize];
+        return [x + w / 2 - cornSize, y - cornSize, 0, h / 2];
       case 2:
-        return [x + w - cornSize, y - cornSize];
+        return [x + w - cornSize, y - cornSize, -w / 2, h / 2];
       case 3:
-        return [x + w - cornSize, y + h / 2 - cornSize];
+        return [x + w - cornSize, y + h / 2 - cornSize, -w / 2, 0];
       case 4:
-        return [x + w - cornSize, y + h - cornSize];
+        return [x + w - cornSize, y + h - cornSize, -w / 2, -h / 2];
       case 5:
-        return [x + w / 2 - cornSize, y + h - cornSize];
+        return [x + w / 2 - cornSize, y + h - cornSize, 0, -h / 2];
       case 6:
-        return [x - cornSize, y + h - cornSize];
+        return [x - cornSize, y + h - cornSize, w / 2, -h / 2];
       case 7:
-        return [x - cornSize, y + h / 2 - cornSize];
+        return [x - cornSize, y + h / 2 - cornSize, w / 2, 0];
       default:
         break;
     }
@@ -148,6 +152,7 @@ const AnimationView = ({
             y: layer.shape.y,
             w: layer.shape.w,
             h: layer.shape.h,
+            rotation: layer.shape.angle,
           };
           cornSize = 15;
           strokeColor = layer.shape.type === 'rect' ? '#fff' : '#000';
@@ -159,6 +164,7 @@ const AnimationView = ({
             y: layer.shape.y - layer.shape.radius,
             w: layer.shape.radius * 2,
             h: layer.shape.radius * 2,
+            rotation: layer.shape.angle,
           };
           cornSize = 15;
           strokeColor = '#000';
@@ -170,6 +176,7 @@ const AnimationView = ({
             y: layer.shape.y,
             w: txt.getMeasuredWidth(),
             h: txt.getMeasuredHeight(),
+            rotation: layer.shape.angle,
           };
           cornSize = 10;
           strokeColor = '#4ee';
@@ -186,20 +193,30 @@ const AnimationView = ({
       }
       const dashRect = new createjs.Shape();
       dashRect.name = '__select_dash';
+      dashRect.regX = selectRect.w / 2;
+      dashRect.regY = selectRect.h / 2;
+      dashRect.x = selectRect.x + selectRect.w / 2;
+      dashRect.y = selectRect.y + selectRect.h / 2;
+      dashRect.rotation = selectRect.rotation;
       dashRect.graphics
         .setStrokeStyle(2)
         .setStrokeDash([5, 5], 0)
-        .beginStroke(strokeColor).drawRect(selectRect.x, selectRect.y, selectRect.w, selectRect.h);
+        .beginStroke(strokeColor).rect(0, 0, selectRect.w, selectRect.h);
 
       stage.addChild(dashRect);
       stage.update();
       for (let i = 0; i < 8; i++) {
         const newShape = new createjs.Shape();
         newShape.name = `__select_${i}`;
-        const [x, y] = getPos(selectRect.x, selectRect.y, selectRect.w, selectRect.h, cornSize / 2, i);
+        const [x, y, regX, regY] = getPos(selectRect.x, selectRect.y, selectRect.w, selectRect.h, cornSize / 2, i);
         newShape.graphics.beginFill('#fff')
           .setStrokeStyle(2).beginStroke('#000')
-          .drawRect(x, y, cornSize, cornSize);
+          .drawRect(0, 0, cornSize, cornSize);
+        newShape.regX = regX + cornSize / 2;
+        newShape.regY = regY + cornSize / 2;
+        newShape.x = regX + x + cornSize / 2;
+        newShape.y = regY + y + cornSize / 2;
+        newShape.rotation = selectRect.rotation;
         stage.addChild(newShape);
         stage.update();
       }
@@ -240,33 +257,29 @@ const AnimationView = ({
             if (!shape) {
               shape = new createjs.Text(layer.shape.text,
                 `${layer.shape.fontSize}px ${layer.shape.fontFamily}`, layer.shape.color);
-              shape.x = layer.shape.x;
-              shape.y = layer.shape.y;
               shape.name = layer.title;
               shape.visible = layer.visible;
               stage.addChild(shape);
             } else {
-              shape.x = layer.shape.x;
-              shape.y = layer.shape.y;
               shape.text = layer.shape.text;
               shape.font = `${layer.shape.fontSize}px ${layer.shape.fontFamily}`;
               shape.color = layer.shape.color;
               shape.rotation = layer.shape.angle;
             }
+            shape.regX = shape.getMeasuredWidth() / 2;
+            shape.regY = shape.getMeasuredHeight() / 2;
+            shape.x = layer.shape.x + shape.getMeasuredWidth() / 2;
+            shape.y = layer.shape.y + shape.getMeasuredHeight() / 2;
             break;
           case 'rect':
             if (!shape) {
               shape = new createjs.Shape();
               shape.name = layer.title;
-              shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
                 .setStrokeDash([0, 0], 0).setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-                .drawRect(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
+                .rect(0, 0, layer.shape.w, layer.shape.h);
               stage.addChild(shape);
             } else {
-              shape.visible = layer.visible;
-              shape.graphics.command.x = layer.shape.x;
-              shape.graphics.command.y = layer.shape.y;
               shape.graphics._fill.style = layer.shape.fillColor;
               shape.graphics._stroke.style = layer.shape.strokeColor;
               if (shape.graphics._strokeStyle) {
@@ -283,20 +296,24 @@ const AnimationView = ({
               shape.graphics.command.h = layer.shape.h;
               shape.rotation = layer.shape.angle;
             }
+            shape.visible = layer.visible;
+            shape.regX = layer.shape.w / 2;
+            shape.regY = layer.shape.h / 2;
+            shape.x = layer.shape.x + layer.shape.w / 2;
+            shape.y = layer.shape.y + layer.shape.h / 2;
             break;
           case 'circle':
             if (!shape) {
               shape = new createjs.Shape();
               shape.name = layer.title;
               shape.visible = layer.visible;
+
               shape.graphics.beginFill(layer.shape.fillColor)
                 .setStrokeDash([0, 0], 0).setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-                .drawCircle(layer.shape.x, layer.shape.y, layer.shape.radius);
+                .drawCircle(0, 0, layer.shape.radius);
               stage.addChild(shape);
             } else {
               shape.visible = layer.visible;
-              shape.graphics.command.x = layer.shape.x;
-              shape.graphics.command.y = layer.shape.y;
               shape.graphics._fill.style = layer.shape.fillColor;
               shape.graphics._stroke.style = layer.shape.strokeColor;
               if (shape.graphics._strokeStyle) {
@@ -312,6 +329,10 @@ const AnimationView = ({
               shape.graphics.command.radius = layer.shape.radius;
               shape.rotation = layer.shape.angle;
             }
+            shape.regX = 0;
+            shape.regY = 0;
+            shape.x = layer.shape.x;
+            shape.y = layer.shape.y;
             break;
           case 'ellipse':
             if (!shape) {
@@ -320,12 +341,10 @@ const AnimationView = ({
               shape.visible = layer.visible;
               shape.graphics.beginFill(layer.shape.fillColor)
                 .setStrokeDash([0, 0], 0).setStrokeStyle(layer.shape.strokeWidth).beginStroke(layer.shape.strokeColor)
-                .drawEllipse(layer.shape.x, layer.shape.y, layer.shape.w, layer.shape.h);
+                .drawEllipse(0, 0, layer.shape.w, layer.shape.h);
               stage.addChild(shape);
             } else {
               shape.visible = layer.visible;
-              shape.graphics.command.x = layer.shape.x;
-              shape.graphics.command.y = layer.shape.y;
               shape.graphics._fill.style = layer.shape.fillColor;
               shape.graphics._stroke.style = layer.shape.strokeColor;
               if (shape.graphics._strokeStyle) {
@@ -342,6 +361,10 @@ const AnimationView = ({
               shape.graphics.command.h = layer.shape.h;
               shape.rotation = layer.shape.angle;
             }
+            shape.regX = layer.shape.w / 2;
+            shape.regY = layer.shape.h / 2;
+            shape.x = layer.shape.x + layer.shape.w / 2;
+            shape.y = layer.shape.y + layer.shape.h / 2;
             break;
           case 'star':
             if (!shape) {
@@ -374,6 +397,36 @@ const AnimationView = ({
               shape.graphics.command.angle = layer.shape.angle;
             }
             break;
+          case 'template':
+            if (!shape) {
+              const templateScript = (templateRequire(`./${layer.shape.scriptName}`)).default;
+              templateScript(createjs, AdobeAn);
+
+              const key = Object.keys(AdobeAn.compositions)[0];
+              const comp = AdobeAn.getComposition(key);
+              const lib = comp.getLibrary();
+              shape = new lib[layer.shape.entryPoint]();
+              shape.name = layer.title;
+              stage.addChild(shape);
+              shape.gotoAndStop(0);
+            }
+            shape.visible = layer.visible;
+            const { texts, shapes, background } = layer.shape;
+            Object.entries(texts).forEach(([key, text]) => {
+              shape[key]._text.text = text.text;
+              shape[key]._text.color = text.color;
+              shape[key]._text.textAlign = text.textAlign;
+              shape[key]._text.textBaseline = text.textBaseline;
+              shape[key]._text.font = text.font;
+              shape[key]._text.x = text.x;
+              shape[key]._text.y = text.y;
+              shape[key].rotation = text.rotation;
+            });
+            Object.entries(shapes).forEach(([key, item]) => {
+              shape[key]._shape.visible = item.visible;
+            });
+            shape.shape11._shape.shape.graphics._fill.style = background;
+            break;
           default:
             break;
         }
@@ -395,12 +448,6 @@ const AnimationView = ({
       }
     }
 
-    if (curTemplate) {
-      const exportRoot = stage.getChildByName(curTemplate.id);
-      if (exportRoot && !paused) exportRoot.gotoAndPlay(curTime / 24);
-      if (exportRoot && paused) exportRoot.gotoAndStop(curTime / 24);
-    }
-
     removeSelectors();
     drawSelectors();
   };
@@ -409,34 +456,48 @@ const AnimationView = ({
     for (let i = 0; i < layers.length; i++) {
       const layer = layers[i];
       const shape = stage.getChildByName(layer.title);
-      if (shape && layer.shape.type !== 'template') {
+      const layerKeyframes = keyframes.find((item) => item.layerId === layer.id).keyframes;
+      if (shape && layer.shape.type !== 'template' && layerKeyframes) {
         const tween = new createjs.Tween.get(shape, { override: true });
-        for (let j = 0; j < layer.keyframes.length; j++) {
-          const keyFrame = layer.keyframes[j];
-          const lastTimeVal = j ? layer.keyframes[j - 1].val : 0;
+        for (let j = 0; j < layerKeyframes.length; j++) {
+          const keyFrame = layerKeyframes[j];
+          const lastTimeVal = j ? layerKeyframes[j - 1].val : 0;
           if (keyFrame.type === 'wait') {
             tween.wait(keyFrame.val - lastTimeVal);
           } else if (keyFrame.type === 'to') {
             tween.to(keyFrame.data, keyFrame.val - lastTimeVal, createjs.Ease[keyFrame.data.anim]);
           }
         }
-        tween.wait(maxTime - layer.keyframes[layer.keyframes.length - 1].val);
+        tween.to({ visible: false }, 10)
+          .wait(maxTime - layerKeyframes[layerKeyframes.length - 1].val - 20)
+          .to({ visible: true }, 10);
         tween.bounce = true;
         timeline.addTween(tween);
+      } else if (layer.shape.type === 'template') {
+        const tween = new createjs.Tween.get(shape, { override: true })
+          .wait(layerKeyframes[1].val);
+        tween.to({ visible: false }, 10)
+          .wait(maxTime - layerKeyframes[1].val - 20)
+          .to({ visible: true }, 10);
       }
     }
     timeline.gotoAndStop(0);
   };
 
   const onDropShape = (e) => {
+    // eslint-disable-next-line no-mixed-operators
+    const x = (e.clientX - canvasSize.x) * 1280 / canvasSize.width;
+    // eslint-disable-next-line no-mixed-operators
+    const y = (e.clientY - canvasSize.y) * 720 / canvasSize.height;
+
     const data = e.dataTransfer.getData('type');
     let shape;
     switch (data) {
       case 'rect':
         shape = {
           type: 'rect',
-          x: e.clientX,
-          y: e.clientY,
+          x,
+          y,
           w: 100,
           h: 100,
           fillColor: '#fff',
@@ -448,8 +509,8 @@ const AnimationView = ({
       case 'ellipse':
         shape = {
           type: 'ellipse',
-          x: e.clientX,
-          y: e.clientY,
+          x,
+          y,
           w: 200,
           h: 100,
           fillColor: '#fff',
@@ -461,8 +522,8 @@ const AnimationView = ({
       case 'circle':
         shape = {
           type: 'circle',
-          x: e.clientX,
-          y: e.clientY,
+          x,
+          y,
           radius: 50,
           fillColor: '#fff',
           strokeStyle: 'solid',
@@ -473,8 +534,8 @@ const AnimationView = ({
       case 'star':
         shape = {
           type: 'star',
-          x: e.clientX,
-          y: e.clientY,
+          x,
+          y,
           radius: 50,
           fillColor: '#fff',
           strokeStyle: 'solid',
@@ -487,8 +548,8 @@ const AnimationView = ({
       case 'text':
         shape = {
           type: 'text',
-          x: e.clientX,
-          y: e.clientY,
+          x,
+          y,
           text: 'New Text',
           fontSize: 45,
           fontFamily: 'Arial',
@@ -509,92 +570,11 @@ const AnimationView = ({
   };
 
   useEffect(() => {
-    const canvas = document.getElementById('canvas');
-    const animContainer = document.getElementById('animation_container');
-    const domOverlayContainer = document.getElementById('dom_overlay_container');
-
-    if (!canvas || !animContainer || !domOverlayContainer || !curTemplate.id) return;
-
-    const templateScript = (templateRequire(`./${curTemplate.scriptName}`)).default;
-    templateScript(createjs, AdobeAn);
-
-    const key = Object.keys(AdobeAn.compositions)[0];
-    const comp = AdobeAn.getComposition(key);
-    const lib = comp.getLibrary();
-    const newExportRoot = new lib[curTemplate.entryPoint]();
-
-    const rootKeys = Object.keys(newExportRoot);
-    const textKeys = rootKeys.filter((item) => item.search(new RegExp('text', 'gi')) !== -1);
-    const shapeKeys = rootKeys.filter((item) => item.search(new RegExp('([^_]+shape)|(shape[^_]+)', 'gi')) !== -1);
-
-    const texts = [];
-    for (let i = 0; i < textKeys.length; i++) {
-      const textKey = textKeys[i];
-      const text = newExportRoot[textKey];
-      texts[textKey] = {
-        text: text._text.text,
-        color: text._text.color,
-        font: text._text.font,
-        textAlign: text._text.textAlign,
-        textBaseline: text._text.textBaseline,
-        x: text._text.x,
-        y: text._text.y,
-        rotation: text.rotation,
-      };
-    }
-
-    const shapes = [];
-
-    for (let i = 0; i < shapeKeys.length; i++) {
-      const shapeKey = shapeKeys[i];
-      const shape = newExportRoot[shapeKey]._shape;
-      shapes[shapeKey] = {
-        visible: shape.visible,
-      };
-    }
-    const backgroundColor = newExportRoot.shape11._shape.shape.graphics._fill.style;
-
-    setTemplateProperty({
-      texts,
-      shapes,
-      background: {
-        color: backgroundColor,
-      },
-    });
-    addNewLayer({ title: curTemplate.id, visible: true, shape: { type: 'template', name: curTemplate.id } });
-    newExportRoot.name = curTemplate.id;
-    if (paused) newExportRoot.gotoAndStop(0);
-
-    stage.addChild(newExportRoot);
-  }, [curTemplate]);
-
-  useEffect(() => {
-    if (!stage || !curTemplate || !curTemplate.id) return;
-    const newExportRoot = stage.getChildByName(curTemplate.id);
-    const { texts, shapes, background } = templateProperty;
-    Object.entries(texts).forEach(([key, text]) => {
-      newExportRoot[key]._text.text = text.text;
-      newExportRoot[key]._text.color = text.color;
-      newExportRoot[key]._text.textAlign = text.textAlign;
-      newExportRoot[key]._text.textBaseline = text.textBaseline;
-      newExportRoot[key]._text.font = text.font;
-      newExportRoot[key]._text.x = text.x;
-      newExportRoot[key]._text.y = text.y;
-      newExportRoot[key].rotation = text.rotation;
-    });
-    Object.entries(shapes).forEach(([key, shape]) => {
-      newExportRoot[key]._shape.visible = shape.visible;
-    });
-    newExportRoot.shape11._shape.shape.graphics._fill.style = background.color;
-    drawLayers();
-  }, [templateProperty]);
-
-  useEffect(() => {
     if (createjs.Ticker.hasEventListener('tick')) {
       createjs.Ticker.removeEventListener('tick', handleTickListener);
     }
     setCurTime(0);
-    handleTickListener = createjs.Ticker.addEventListener('tick', handleTick(maxTime));
+    handleTickListener = createjs.Ticker.addEventListener('tick', handleTick);
   }, [maxTime]);
 
   useEffect(() => {
@@ -603,17 +583,26 @@ const AnimationView = ({
       if (createjs.Ticker.hasEventListener('tick')) {
         createjs.Ticker.removeEventListener('tick', handleTickListener);
       }
-      handleTickListener = createjs.Ticker.addEventListener('tick', handleTick(maxTime));
+      handleTickListener = createjs.Ticker.addEventListener('tick', handleTick);
     } else {
       // createjs.Ticker.removeEventListener('tick', handleTickListener);
     }
 
     createjs.Ticker.paused = !!paused;
-    if (curTemplate) {
-      const exportRoot = stage.getChildByName(curTemplate.id);
-      if (exportRoot && !paused) exportRoot.gotoAndPlay(curTime / 24);
-      if (exportRoot && paused) exportRoot.gotoAndStop(curTime / 24);
+    const templateLayers = layers.filter((item) => item.shape.type === 'template');
+    for (let i = 0; i < templateLayers.length; i++) {
+      const layer = templateLayers[i];
+      const exportRoot = stage.getChildByName(layer.title);
+      const layerKeyframes = keyframes.find((item) => item.layerId === layer.id).keyframes;
+      if (curTime < layerKeyframes[0].val || curTime > layerKeyframes[1].val) {
+        exportRoot.visible = false;
+      } else {
+        exportRoot.visible = true;
+        if (exportRoot && !paused) exportRoot.gotoAndPlay((curTime - layerKeyframes[0].val) / 24);
+        if (exportRoot && paused) exportRoot.gotoAndStop((curTime - layerKeyframes[0].val) / 24);
+      }
     }
+
     if (!paused) timeline.gotoAndPlay(curTime);
     else timeline.gotoAndStop(curTime);
     removeSelectors();
@@ -631,21 +620,28 @@ const AnimationView = ({
 
   useEffect(() => {
     if (!stage) return;
-    if (curTemplate) {
-      const exportRoot = stage.getChildByName(curTemplate.id);
-      if (exportRoot) {
-        if (paused) exportRoot.gotoAndPlay(curTime / 24);
-        else exportRoot.gotoAndStop(curTime / 24);
+    const templateLayers = layers.filter((item) => item.shape.type === 'template');
+    for (let i = 0; i < templateLayers.length; i++) {
+      const layer = templateLayers[i];
+      const exportRoot = stage.getChildByName(layer.title);
+      const layerKeyframes = keyframes.find((item) => item.layerId === layer.id).keyframes;
+      if (curTime === 0) {
+        drawLayers();
+        addTweens();
+      }
+      if (curTime < layerKeyframes[0].val || curTime > layerKeyframes[1].val) {
+        exportRoot.visible = false;
+      } else {
+        exportRoot.visible = true;
+        if (exportRoot && !paused) exportRoot.gotoAndPlay((curTime - layerKeyframes[0].val) / 24);
+        if (exportRoot && paused) exportRoot.gotoAndStop((curTime - layerKeyframes[0].val) / 24);
       }
     }
+
     if (paused) {
       timeline.gotoAndStop(curTime);
     } else {
       timeline.gotoAndPlay(curTime);
-    }
-    if (curTime === 0) {
-      drawLayers();
-      addTweens();
     }
     stage.update();
   }, [curTime]);
@@ -672,10 +668,21 @@ const AnimationView = ({
       drawLayers();
       addTweens();
     } else {
-      setCurTime(0);
+      drawLayers();
     }
     setPaused(true);
   }, [layers]);
+
+  useEffect(() => {
+    if (!stage) return;
+    if (curTime === 0) {
+      drawLayers();
+      addTweens();
+    } else {
+      setCurTime(0);
+    }
+    setPaused(true);
+  }, [keyframes]);
 
   useEffect(() => {
     removeSelectors();
@@ -702,20 +709,20 @@ const AnimationView = ({
 };
 
 AnimationView.propTypes = {
-  templateProperty: PropTypes.object.isRequired,
-  curTemplate: PropTypes.object.isRequired,
-  setTemplateProperty: PropTypes.func.isRequired,
   setAnimationViewSize: PropTypes.func.isRequired,
+  setCanvasSize: PropTypes.func.isRequired,
   setCurTime: PropTypes.func.isRequired,
   paused: PropTypes.bool.isRequired,
   curTime: PropTypes.number.isRequired,
   setPaused: PropTypes.func.isRequired,
   layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+  keyframes: PropTypes.arrayOf(PropTypes.object).isRequired,
   maxTime: PropTypes.number.isRequired,
   curLayer: PropTypes.number.isRequired,
   addNewLayer: PropTypes.func.isRequired,
   setLayerData: PropTypes.func.isRequired,
   exportMode: PropTypes.bool.isRequired,
+  canvasSize: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = ({
@@ -726,20 +733,23 @@ const mapStateToProps = ({
   paused: template.paused,
   curTime: time.curTime,
   layers: layer.layers,
+  keyframes: layer.keyframes,
   maxTime: layer.maxTime,
   curLayer: layer.curLayer,
   exportMode: template.exportMode,
+  canvasSize: template.canvasSize,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
   {
-    setTemplateProperty: TemplateAction.setTemplateProperty,
     setAnimationViewSize: TemplateAction.setAnimationViewSize,
+    setCanvasSize: TemplateAction.setCanvasSize,
     setPaused: TemplateAction.setPaused,
     setCurTime: TimeAction.setCurTime,
     addNewLayer: LayerAction.addNewLayer,
     setCurLayer: LayerAction.setCurLayer,
     setLayerData: LayerAction.setLayerData,
+    addTemplate: TemplateAction.addTemplate,
   },
   dispatch,
 );
