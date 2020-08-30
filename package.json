@@ -18,7 +18,7 @@
     "bootstrap": "^4.5.2",
     "camelcase": "^5.2.0",
     "case-sensitive-paths-webpack-plugin": "2.2.0",
-    "ccapture.js": "https://github.com/aceslowman/ccapture.js.git#npm-fix",
+    "ccapture.js": "https://github.com/dragonheaven/ccapture.js.git",
     "connected-react-router": "^6.5.2",
     "createjs": "^1.0.1",
     "css-loader": "2.1.1",
