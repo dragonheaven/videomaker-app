@@ -57,18 +57,18 @@ const initialState = {
           data: { alpha: 1, x: 990 },
           val: 4100,
         },
-        {
-          type: 'to',
-          data: {
-            scaleX: 1, scaleY: 1, y: 640, x: 290,
-          },
-          val: 6100,
-        },
-        {
-          type: 'to',
-          data: { y: 240, x: 290 },
-          val: 7100,
-        },
+        // {
+        //   type: 'to',
+        //   data: {
+        //     scaleX: 1, scaleY: 1, y: 640, x: 290,
+        //   },
+        //   val: 6100,
+        // },
+        // {
+        //   type: 'to',
+        //   data: { y: 240, x: 290 },
+        //   val: 7100,
+        // },
       ],
     },
     {
@@ -89,24 +89,24 @@ const initialState = {
           data: { alpha: 1, x: 940 },
           val: 4100,
         },
-        {
-          type: 'to',
-          data: {
-            scaleX: 1, scaleY: 1, y: 740, x: 240,
-          },
-          val: 6100,
-        },
-        {
-          type: 'to',
-          data: { y: 240, x: 240 },
-          val: 8100,
-        },
+        // {
+        //   type: 'to',
+        //   data: {
+        //     scaleX: 1, scaleY: 1, y: 740, x: 240,
+        //   },
+        //   val: 6100,
+        // },
+        // {
+        //   type: 'to',
+        //   data: { y: 240, x: 240 },
+        //   val: 8100,
+        // },
       ],
     },
   ],
   curLayer: -1,
   maxLayerId: 2,
-  maxTime: 8100,
+  maxTime: 4100,
 };
 
 export default function layerReducer(state = initialState, action) {

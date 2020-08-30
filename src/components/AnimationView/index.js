@@ -434,6 +434,7 @@ const AnimationView = ({
       }
     }
 
+    console.log(stage);
     const childrens = stage.children;
     for (let i = childrens.length - 1; i >= 0; i--) {
       for (let j = i - 1; j >= 0; j--) {
@@ -485,9 +486,7 @@ const AnimationView = ({
   };
 
   const onDropShape = (e) => {
-    // eslint-disable-next-line no-mixed-operators
     const x = (e.clientX - canvasSize.x) * 1280 / canvasSize.width;
-    // eslint-disable-next-line no-mixed-operators
     const y = (e.clientY - canvasSize.y) * 720 / canvasSize.height;
 
     const data = e.dataTransfer.getData('type');

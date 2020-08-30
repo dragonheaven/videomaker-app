@@ -290,11 +290,11 @@ class ExportVideoModal extends React.Component {
     createjs.Ticker.paused = false;
     this.timeline.gotoAndPlay(0);
     this.exportStage.update();
-    createjs.Ticker.framerate = 16;
+    createjs.Ticker.framerate = 24;
     this.capturer = new CCapture({
       format: 'ffmpegserver',
       verbose: true,
-      framerate: 16,
+      framerate: 24,
       onProgress: this.onProgress,
       extension: '.mp4',
     });

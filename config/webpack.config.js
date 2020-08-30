@@ -359,7 +359,7 @@ module.exports = function (webpackEnv) {
             loader: 'exports-loader',
             options: {
               type: 'commonjs',
-              exports: 'single window.createjs',
+              exports: 'single createjs',
             },
           }],
         },
