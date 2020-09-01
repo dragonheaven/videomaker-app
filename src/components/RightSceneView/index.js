@@ -1,21 +1,17 @@
 import React from 'react';
 
-
+import './style.scss';
 import * as Icon from 'react-feather';
 import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import * as TemplateAction from '../../store/actions/template.action';
 import * as TimeAction from '../../store/actions/time.action';
-import './style.scss';
 
-const RightSceneView = ({
-  paused, setPaused, setCurTime, curTime, maxTime,
-}) => {
+const RightSceneView = ({ paused, setPaused, setCurTime, curTime, maxTime }) => {
   const onPlayButtonClick = () => {
     setPaused(!paused);
   };
-
   const timeBackward = () => {
     if (curTime >= 100) {
       setCurTime(curTime - 100);

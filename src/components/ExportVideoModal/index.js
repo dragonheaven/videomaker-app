@@ -62,7 +62,8 @@ class ExportVideoModal extends React.Component {
   };
 
   showVideoLink = (url) => {
-    cancelAnimationFrame(this.animationFrameHandler);
+    // cancelAnimationFrame(this.animationFrameHandler);
+    window.clearInterval(this.intervalHandler);
     const a = document.createElement('a');
     a.href = `${process.env.REACT_APP_VIDEO_API}${url}`;
     this.setState({ url: `${process.env.REACT_APP_VIDEO_API}${url}` });
@@ -300,11 +301,13 @@ class ExportVideoModal extends React.Component {
     });
 
     this.capturer.start();
+    this.intervalHandler = window.setInterval(this.render(), 1000/24);
     this.animate();
     this.setState({ frameNum: 0, progress: 0 });
   };
 
   onExportClose = () => {
+    window.clearInterval(this.intervalHandler);
     createjs.Ticker.removeEventListener('tick', handleTickExport);
     if (this.capturer) {
       this.capturer.stop();

@@ -434,7 +434,6 @@ const AnimationView = ({
       }
     }
 
-    console.log(stage);
     const childrens = stage.children;
     for (let i = childrens.length - 1; i >= 0; i--) {
       for (let j = i - 1; j >= 0; j--) {
