@@ -3,9 +3,7 @@ import PropTypes from 'prop-types';
 import './style.scss';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import CCapture from 'ccapture.js';
 import Progress from 'react-progressbar';
-import createjs from 'createjs'
 import { CircularProgress } from '@material-ui/core';
 import Modal from '../common/Modal';
 import * as TemplateAction from '../../store/actions/template.action';
@@ -21,7 +19,8 @@ class ExportVideoModal extends React.Component {
     this.state = {
       url: '',
       progress: 0,
-      frameNum: 0,
+      frameProgress: 0,
+      rendering: false,
     };
   }
 
@@ -31,7 +30,23 @@ class ExportVideoModal extends React.Component {
     this.timeline = new createjs.Timeline();
     this.drawLayers();
     this.addTweens();
+    this.socket = io(process.env.REACT_APP_VIDEO_API).connect();
+    this.socket.emit('join-game', 'hello');
+    this.socket.on('end', this.receiveEnd);
+    this.socket.on('progress', this.onProgress)
   }
+
+  componentWillUnmount() {
+    this.socket.disconnect();
+  }
+
+  receiveEnd = (writeNum, url='/1.mp4') => {
+    console.log('end video', writeNum);
+    const a = document.createElement('a');
+    a.href = `${process.env.REACT_APP_VIDEO_API}${url}`;
+    console.log(a.href);
+    this.setState({ url: `${process.env.REACT_APP_VIDEO_API}${url}`, rendering: false });
+  };
 
   onProgress = (progress) => {
     this.setState({ progress });
@@ -42,8 +57,7 @@ class ExportVideoModal extends React.Component {
     if (!this.exportStage) return;
     if (this.timeline.position >= maxTime) {
       createjs.Ticker.removeEventListener('tick', handleTickExport);
-      this.capturer.stop();
-      this.capturer.save(this.showVideoLink);
+      this.emitEnd();
     } else {
       const templateLayers = layers.filter((item) => item.shape.type === 'template');
       for (let i = 0; i < templateLayers.length; i++) {
@@ -59,14 +73,6 @@ class ExportVideoModal extends React.Component {
       }
     }
     this.exportStage.update();
-  };
-
-  showVideoLink = (url) => {
-    // cancelAnimationFrame(this.animationFrameHandler);
-    window.clearInterval(this.intervalHandler);
-    const a = document.createElement('a');
-    a.href = `${process.env.REACT_APP_VIDEO_API}${url}`;
-    this.setState({ url: `${process.env.REACT_APP_VIDEO_API}${url}` });
   };
 
   drawLayers = () => {
@@ -274,57 +280,58 @@ class ExportVideoModal extends React.Component {
     this.timeline.gotoAndStop(0);
   };
 
-  animate = () => {
-    this.renderVideo();
-    this.animationFrameHandler = requestAnimationFrame(this.animate);
-  };
-
-  renderVideo = () => {
-    if (!this.capturer) return;
-    const { frameNum } = this.state;
-    this.setState({ frameNum: frameNum + 1 });
-    this.capturer.capture(this.canvas);
-  };
-
   startExport = () => {
     handleTickExport = createjs.Ticker.addEventListener('tick', this.handleTick);
     createjs.Ticker.paused = false;
     this.timeline.gotoAndPlay(0);
     this.exportStage.update();
     createjs.Ticker.framerate = 24;
-    this.capturer = new CCapture({
-      format: 'ffmpegserver',
-      verbose: true,
-      framerate: 24,
-      onProgress: this.onProgress,
-      extension: '.mp4',
+
+    this.intervalHandler = window.setInterval(this.captureCanvas, 1000 / createjs.Ticker.framerate);
+    this.socket.emit('start');
+    this.frameNum = 0;
+    this.maxFrameCnt = createjs.Ticker.framerate * this.props.maxTime / 1000;
+    this.setState({ frameProgress: 0, progress: 0, rendering: true });
+  };
+
+  captureCanvas = () => {
+    this.socket.emit('progress', {
+      frameNum: this.frameNum ++,
+      buffer: this.canvas.toDataURL()
     });
 
-    this.capturer.start();
-    this.intervalHandler = window.setInterval(this.render(), 1000/24);
-    this.animate();
-    this.setState({ frameNum: 0, progress: 0 });
+    if (this.frameNum % 24 === 0 || this.frameNum >= this.maxFrameCnt) {
+      const percent = this.frameNum / this.maxFrameCnt > 1 ? 1 : this.frameNum / this.maxFrameCnt;
+      this.setState({ frameProgress: percent });
+    }
+  };
+
+  emitEnd = () => {
+    this.socket.emit('end', this.frameNum);
+    this.setState({ frameProgress: 1 });
+    window.clearInterval(this.intervalHandler);
   };
 
   onExportClose = () => {
-    window.clearInterval(this.intervalHandler);
     createjs.Ticker.removeEventListener('tick', handleTickExport);
-    if (this.capturer) {
-      this.capturer.stop();
-    }
-    this.props.onClose();
-    this.props.setExportMode(false);
+    window.clearInterval(this.intervalHandler);
+    this.socket.emit('cancel');
+    this.onClose();
   };
 
   onDownload = () => {
     this.setState({ url: '' });
+    this.onClose();
+  };
+
+  onClose = () => {
     this.props.onClose();
     this.props.setExportMode(false);
   };
 
   render() {
-    const { show, onClose, maxTime } = this.props;
-    const { url, progress, frameNum } = this.state;
+    const { show, onClose } = this.props;
+    const { url, progress, frameProgress, rendering } = this.state;
     return (
       <>
         <Modal
@@ -337,9 +344,7 @@ class ExportVideoModal extends React.Component {
             <canvas id="canvas_export" className="canvas-export" width={1280} height={720} />
             <div>
               <Progress
-                completed={
-                  Math.floor((frameNum * 10000) / (3 * maxTime) > 100 ? 100 : (frameNum * 10000) / (3 * maxTime))
-                }
+                completed={Math.floor(frameProgress * 100)}
               />
               <Progress completed={Math.floor(progress * 100)} />
             </div>
@@ -352,7 +357,7 @@ class ExportVideoModal extends React.Component {
                 && (
                   <button className="btn btn-primary btn-export" onClick={this.startExport}>
                     {
-                      frameNum === 0 ? 'Export' : <CircularProgress size={18} color="inherit" />
+                      !rendering ? 'Export' : <CircularProgress size={18} color="inherit" />
                     }
                   </button>
                 )
