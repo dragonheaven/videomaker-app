@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 
 import './style.scss';
 import * as Icon from 'react-feather';
@@ -8,7 +8,13 @@ import { connect } from 'react-redux';
 import * as TemplateAction from '../../store/actions/template.action';
 import * as TimeAction from '../../store/actions/time.action';
 
-const RightSceneView = ({ paused, setPaused, setCurTime, curTime, maxTime }) => {
+const RightSceneView = ({ paused, setPaused, setCurTime, curTime, maxTime, exportMode }) => {
+  useEffect(() => {
+    if (exportMode && !paused) {
+      setPaused(true);
+    }
+  }, [exportMode]);
+
   const onPlayButtonClick = () => {
     setPaused(!paused);
   };
@@ -45,12 +51,14 @@ RightSceneView.propTypes = {
   setCurTime: PropTypes.func.isRequired,
   curTime: PropTypes.number.isRequired,
   maxTime: PropTypes.number.isRequired,
+  exportMode: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = ({ template, time, layer }) => ({
   paused: template.paused,
   curTime: time.curTime,
   maxTime: layer.maxTime,
+  exportMode: template.exportMode
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(

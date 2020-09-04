@@ -75,7 +75,7 @@ const AddTemplateButton = ({ addNewLayer, templates }) => {
         shapes,
         background: backgroundColor,
       },
-    }, [{ val: 0, type: 'wait' }, { val: 5000 }]);
+    }, [{ val: 0, type: 'wait' }, { val: newExportRoot.timeline.duration * 1000 / 24 }]);
     setIsOpen(false);
   };
 

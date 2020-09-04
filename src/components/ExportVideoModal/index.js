@@ -1,12 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import './style.scss';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import Progress from 'react-progressbar';
 import { CircularProgress } from '@material-ui/core';
+import io from 'socket.io-client';
+
 import Modal from '../common/Modal';
 import * as TemplateAction from '../../store/actions/template.action';
+import './style.scss';
 
 const templateRequire = require.context('../../templates/', true);
 
@@ -41,10 +43,9 @@ class ExportVideoModal extends React.Component {
   }
 
   receiveEnd = (writeNum, url='/1.mp4') => {
-    console.log('end video', writeNum);
+    console.log('end video', writeNum, this.maxFrameCnt);
     const a = document.createElement('a');
     a.href = `${process.env.REACT_APP_VIDEO_API}${url}`;
-    console.log(a.href);
     this.setState({ url: `${process.env.REACT_APP_VIDEO_API}${url}`, rendering: false });
   };
 
@@ -68,7 +69,7 @@ class ExportVideoModal extends React.Component {
           exportRoot.visible = false;
         } else {
           exportRoot.visible = true;
-          exportRoot.gotoAndStop((this.timeline.position - layerKeyframes[0].val) / 24);
+          exportRoot.gotoAndStop(Math.floor((this.timeline.position - layerKeyframes[0].val) / 48));
         }
       }
     }
@@ -307,7 +308,10 @@ class ExportVideoModal extends React.Component {
   };
 
   emitEnd = () => {
-    this.socket.emit('end', this.frameNum);
+    this.socket.emit('end', {
+      maxCnt: this.maxFrameCnt,
+      frameNum: this.frameNum
+    } );
     this.setState({ frameProgress: 1 });
     window.clearInterval(this.intervalHandler);
   };

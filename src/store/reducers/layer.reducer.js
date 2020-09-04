@@ -57,18 +57,18 @@ const initialState = {
           data: { alpha: 1, x: 990 },
           val: 4100,
         },
-        // {
-        //   type: 'to',
-        //   data: {
-        //     scaleX: 1, scaleY: 1, y: 640, x: 290,
-        //   },
-        //   val: 6100,
-        // },
-        // {
-        //   type: 'to',
-        //   data: { y: 240, x: 290 },
-        //   val: 7100,
-        // },
+        {
+          type: 'to',
+          data: {
+            scaleX: 1, scaleY: 1, y: 640, x: 290,
+          },
+          val: 6100,
+        },
+        {
+          type: 'to',
+          data: { y: 240, x: 290 },
+          val: 7100,
+        },
       ],
     },
     {
@@ -89,24 +89,24 @@ const initialState = {
           data: { alpha: 1, x: 940 },
           val: 4100,
         },
-        // {
-        //   type: 'to',
-        //   data: {
-        //     scaleX: 1, scaleY: 1, y: 740, x: 240,
-        //   },
-        //   val: 6100,
-        // },
-        // {
-        //   type: 'to',
-        //   data: { y: 240, x: 240 },
-        //   val: 8100,
-        // },
+        {
+          type: 'to',
+          data: {
+            scaleX: 1, scaleY: 1, y: 740, x: 240,
+          },
+          val: 6100,
+        },
+        {
+          type: 'to',
+          data: { y: 240, x: 240 },
+          val: 8100,
+        },
       ],
     },
   ],
   curLayer: -1,
   maxLayerId: 2,
-  maxTime: 4100,
+  maxTime: 8100,
 };
 
 export default function layerReducer(state = initialState, action) {
@@ -123,12 +123,22 @@ export default function layerReducer(state = initialState, action) {
         },
       };
       newLayer.id = state.maxLayerId;
+
+      newMaxTime = action.keyframes[action.keyframes.length - 1].val;
+      state.keyframes.forEach((item) => {
+        if (item.layerId !== action.layerId && item.keyframes
+          && newMaxTime < item.keyframes[item.keyframes.length - 1].val) {
+          newMaxTime = item.keyframes[item.keyframes.length - 1].val;
+        }
+      });
+
       return {
         ...state,
         layers: [...state.layers, newLayer],
         maxLayerId: state.maxLayerId + 1,
         keyframes: [...state.keyframes, { layerId: newLayer.id, keyframes: action.keyframes }],
         curLayer: newLayer.id,
+        maxTime: newMaxTime,
       };
     case ACTION.SET_CUR_LAYER:
       return {

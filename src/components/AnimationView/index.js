@@ -596,8 +596,8 @@ const AnimationView = ({
         exportRoot.visible = false;
       } else {
         exportRoot.visible = true;
-        if (exportRoot && !paused) exportRoot.gotoAndPlay((curTime - layerKeyframes[0].val) / 24);
-        if (exportRoot && paused) exportRoot.gotoAndStop((curTime - layerKeyframes[0].val) / 24);
+        if (exportRoot && !paused) exportRoot.gotoAndPlay(Math.floor((curTime - layerKeyframes[0].val) / 48));
+        if (exportRoot && paused) exportRoot.gotoAndStop(Math.floor((curTime - layerKeyframes[0].val) / 48));
       }
     }
 
@@ -631,8 +631,8 @@ const AnimationView = ({
         exportRoot.visible = false;
       } else {
         exportRoot.visible = true;
-        if (exportRoot && !paused) exportRoot.gotoAndPlay((curTime - layerKeyframes[0].val) / 24);
-        if (exportRoot && paused) exportRoot.gotoAndStop((curTime - layerKeyframes[0].val) / 24);
+        if (exportRoot && !paused) exportRoot.gotoAndPlay(Math.floor((curTime - layerKeyframes[0].val) / 48));
+        if (exportRoot && paused) exportRoot.gotoAndStop(Math.floor((curTime - layerKeyframes[0].val) / 48));
       }
     }
 
